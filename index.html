@@ -1391,7 +1391,7 @@
     </div>
     <div class="weeknav" style="gap:6px;">
       <span id="syncStatus" title="Trạng thái đồng bộ" style="font-size:11px;color:var(--ink-soft);display:none;align-items:center;margin-right:2px;"></span>
-      <button class="theme-toggle" id="authBtn" title="Đăng nhập bằng Google để đồng bộ" style="width:auto;padding:0 10px;border-radius:16px;font-size:12px;font-family:'Be Vietnam Pro',sans-serif;font-weight:600;">Đăng nhập</button>
+      <button class="theme-toggle" id="authBtn" title="Đăng nhập để đồng bộ" style="width:auto;padding:0 10px;border-radius:16px;font-size:12px;font-family:'Be Vietnam Pro',sans-serif;font-weight:600;">Đăng nhập</button>
       <button class="theme-toggle" id="searchToggle" title="Tìm kiếm">🔍</button>
       <button class="theme-toggle" id="reminderToggle" title="Bật/tắt nhắc nhở deadline">🔔</button>
       <button class="theme-toggle" id="exportBtn" title="Xuất file sao lưu (JSON)">📤</button>
@@ -1402,6 +1402,25 @@
     </div>
   </header>
   <div id="confettiLayer"></div>
+
+  <div class="modal-overlay" id="authModal">
+    <div class="modal-content" style="max-width:360px;">
+      <div class="modal-eyebrow">ĐỒNG BỘ TÀI KHOẢN</div>
+      <h3 id="authModalTitle" style="margin:0 0 12px;">🔐 Đăng nhập</h3>
+      <div class="field-label">Email</div>
+      <input type="email" id="authEmail" placeholder="ban@email.com" style="width:100%;margin-bottom:10px;padding:9px 11px;border:1.5px solid var(--ink);border-radius:8px;background:var(--card);color:var(--ink);font-family:'Be Vietnam Pro',sans-serif;font-size:14px;">
+      <div class="field-label">Mật khẩu</div>
+      <input type="password" id="authPassword" placeholder="Tối thiểu 6 ký tự" style="width:100%;margin-bottom:6px;padding:9px 11px;border:1.5px solid var(--ink);border-radius:8px;background:var(--card);color:var(--ink);font-family:'Be Vietnam Pro',sans-serif;font-size:14px;">
+      <div id="authError" style="color:var(--rose-deep);font-size:12px;min-height:16px;margin-bottom:6px;"></div>
+      <div class="modal-footer" style="justify-content:space-between;align-items:center;">
+        <button type="button" id="authToggleMode" style="background:none;border:none;color:var(--sage-deep);font-size:12px;cursor:pointer;padding:0;text-decoration:underline;">Chưa có tài khoản? Đăng ký</button>
+        <div style="display:flex;gap:8px;">
+          <button class="btn" id="closeAuthModal">Huỷ</button>
+          <button class="btn" id="authSubmitBtn" style="background:var(--sage-deep);color:#fff;border-color:var(--sage-deep);">Đăng nhập</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <div class="modal-overlay" id="gradeModal">
     <div class="modal-content" style="max-width:340px;">
@@ -1909,12 +1928,12 @@ loadClipboard();
 
 // ---- SUPABASE CLOUD SYNC ----
 // 1) Tạo project tại https://supabase.com
-// 2) Vào Authentication → Providers → bật Google, điền Client ID/Secret từ Google Cloud Console
-// 3) Vào Authentication → URL Configuration → thêm domain Vercel của bạn vào Redirect URLs
-// 4) Chạy file supabase-setup.sql (đi kèm) trong SQL Editor để tạo bảng + policy
-// 5) Điền URL và anon key của project vào 2 dòng bên dưới
-const SUPABASE_URL = 'https://YOUR-PROJECT.supabase.co';
-const SUPABASE_ANON_KEY = 'YOUR-ANON-KEY';
+// 2) Vào Authentication → Providers → đảm bảo "Email" đang bật (mặc định đã bật sẵn)
+//    (Tuỳ chọn) Vào Authentication → Settings → tắt "Confirm email" nếu muốn đăng ký xong dùng luôn, không cần xác nhận email
+// 3) Chạy file supabase-setup.sql (đi kèm) trong SQL Editor để tạo bảng + policy
+// 4) Điền URL và anon key của project vào 2 dòng bên dưới
+const SUPABASE_URL = 'https://zfjrruofvwaxwrwfcfvp.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_o4XDtw18FPJPyOstAFZ1iA_mAxfjXim';
 let sb = null;
 let currentUser = null;
 let cloudSyncTimer = null;
@@ -1947,8 +1966,8 @@ function updateAuthBtn(){
     btn.textContent = '✓ ' + (currentUser.email || 'Đã đăng nhập');
     btn.title = 'Bấm để đăng xuất';
   } else {
-    btn.textContent = 'Đăng nhập bằng Google';
-    btn.title = 'Đăng nhập để đồng bộ dữ liệu qua nhiều thiết bị';
+    btn.textContent = 'Đăng nhập';
+    btn.title = 'Đăng nhập bằng email để đồng bộ dữ liệu qua nhiều thiết bị';
   }
 }
 
@@ -2040,18 +2059,83 @@ async function initSupabaseSync(){
     if(event === 'SIGNED_IN') cloudPull();
   });
 
+  let authMode = 'signin'; // 'signin' | 'signup'
+  function openAuthModal(){
+    document.getElementById('authEmail').value = '';
+    document.getElementById('authPassword').value = '';
+    document.getElementById('authError').textContent = '';
+    authMode = 'signin';
+    document.getElementById('authModalTitle').textContent = '🔐 Đăng nhập';
+    document.getElementById('authSubmitBtn').textContent = 'Đăng nhập';
+    document.getElementById('authToggleMode').textContent = 'Chưa có tài khoản? Đăng ký';
+    document.getElementById('authModal').classList.add('open');
+    setTimeout(()=> document.getElementById('authEmail').focus(), 80);
+  }
+  function closeAuthModal(){
+    document.getElementById('authModal').classList.remove('open');
+  }
   document.getElementById('authBtn').addEventListener('click', async ()=>{
     if(!sb) return;
     if(currentUser){
-      const ok = await showConfirm('Đăng xuất khỏi tài khoản Google? Dữ liệu vẫn được giữ trên mây và trên máy này.', 'Đăng xuất');
+      const ok = await showConfirm('Đăng xuất khỏi tài khoản? Dữ liệu vẫn được giữ trên mây và trên máy này.', 'Đăng xuất');
       if(!ok) return;
       await sb.auth.signOut();
       currentUser = null;
       updateAuthBtn();
     } else {
-      await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
+      openAuthModal();
     }
   });
+  document.getElementById('closeAuthModal').addEventListener('click', closeAuthModal);
+  document.getElementById('authModal').addEventListener('click', e=>{ if(e.target.id==='authModal') closeAuthModal(); });
+  document.getElementById('authToggleMode').addEventListener('click', ()=>{
+    authMode = authMode === 'signin' ? 'signup' : 'signin';
+    document.getElementById('authError').textContent = '';
+    if(authMode === 'signup'){
+      document.getElementById('authModalTitle').textContent = '🔐 Đăng ký';
+      document.getElementById('authSubmitBtn').textContent = 'Đăng ký';
+      document.getElementById('authToggleMode').textContent = 'Đã có tài khoản? Đăng nhập';
+    } else {
+      document.getElementById('authModalTitle').textContent = '🔐 Đăng nhập';
+      document.getElementById('authSubmitBtn').textContent = 'Đăng nhập';
+      document.getElementById('authToggleMode').textContent = 'Chưa có tài khoản? Đăng ký';
+    }
+  });
+  async function submitAuth(){
+    const email = document.getElementById('authEmail').value.trim();
+    const password = document.getElementById('authPassword').value;
+    const errEl = document.getElementById('authError');
+    errEl.textContent = '';
+    if(!email || !password){ errEl.textContent = 'Vui lòng nhập đầy đủ email và mật khẩu.'; return; }
+    if(password.length < 6){ errEl.textContent = 'Mật khẩu cần tối thiểu 6 ký tự.'; return; }
+    const btn = document.getElementById('authSubmitBtn');
+    btn.disabled = true;
+    try{
+      if(authMode === 'signup'){
+        const { data, error } = await sb.auth.signUp({ email, password });
+        if(error) throw error;
+        if(data.user && !data.session){
+          errEl.style.color = 'var(--sage-deep)';
+          errEl.textContent = 'Đã gửi email xác nhận. Kiểm tra hộp thư để hoàn tất đăng ký, sau đó đăng nhập lại.';
+          btn.disabled = false;
+          return;
+        }
+      } else {
+        const { error } = await sb.auth.signInWithPassword({ email, password });
+        if(error) throw error;
+      }
+      closeAuthModal();
+    } catch(e){
+      errEl.style.color = 'var(--rose-deep)';
+      errEl.textContent = e.message === 'Invalid login credentials'
+        ? 'Sai email hoặc mật khẩu.'
+        : (e.message || 'Có lỗi xảy ra, thử lại.');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+  document.getElementById('authSubmitBtn').addEventListener('click', submitAuth);
+  document.getElementById('authPassword').addEventListener('keydown', e=>{ if(e.key==='Enter') submitAuth(); });
 }
 initSupabaseSync();
 
