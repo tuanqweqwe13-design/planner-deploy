@@ -1302,7 +1302,7 @@
     .cal-grid{min-width:760px;}
   }
 
-  @media(max-width:700px){
+  @media(max-width:860px){
     body{padding:18px 12px 50px;font-size:15px;}
     header{flex-direction:column;align-items:flex-start;gap:12px;}
     .brand h1{font-size:28px;}
@@ -1340,7 +1340,16 @@
     .side-panels{gap:12px;}
     .side-card{padding:12px;}
 
-    .weeknav[style]{flex-wrap:wrap;justify-content:flex-start;row-gap:8px;}
+    .weeknav[style]{
+      flex-wrap:wrap;justify-content:flex-start;row-gap:8px;
+      width:100%;
+    }
+    .weeknav[style] .theme-toggle,
+    .weeknav[style] .sound-toggle{flex-shrink:0;}
+    #authBtn{
+      max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    }
+    #syncStatus{width:100%;order:-1;margin-right:0;}
     .focus-topline{flex-wrap:wrap;row-gap:4px;}
 
     .plan-row{padding:10px 12px;gap:9px;}
@@ -1356,6 +1365,11 @@
     .weeknav .label b{font-size:13px;}
     .stats-strip{gap:8px;}
     .stats-strip .pill{padding:4px 9px;font-size:11px;}
+
+    #authBtn{max-width:110px;font-size:11px;}
+    .weeknav[style]{gap:5px;}
+    .weeknav[style] button{width:30px;height:30px;font-size:12px;}
+    #authBtn{width:auto;height:30px;}
 
     .plan-row{flex-wrap:wrap;}
     .plan-star{margin-left:auto;}
