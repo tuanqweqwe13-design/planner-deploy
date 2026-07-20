@@ -1,4 +1,4 @@
-const CACHE_NAME = 'weekly-plan-v1';
+const CACHE_NAME = 'weekly-plan-v2';
 const APP_SHELL = [
   './',
   './index.html',
@@ -9,7 +9,15 @@ const APP_SHELL = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.all(
+        APP_SHELL.map((url) =>
+          cache.add(url).catch((err) => {
+            console.warn('SW: skip caching (not found / failed):', url, err);
+          })
+        )
+      )
+    )
   );
   self.skipWaiting();
 });
@@ -33,6 +41,17 @@ self.addEventListener('fetch', (event) => {
   const sameOrigin = url.origin === self.location.origin;
 
   if (sameOrigin) {
+    if (req.mode === 'navigate') {
+      event.respondWith(
+        fetch(req).then((res) => {
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, res.clone()));
+          return res;
+        }).catch(() =>
+          caches.match(req).then((cached) => cached || caches.match('./index.html'))
+        )
+      );
+      return;
+    }
     event.respondWith(
       caches.match(req).then((cached) => {
         const fetchPromise = fetch(req).then((res) => {
