@@ -1344,8 +1344,8 @@
     .brand h1{font-size:28px;}
     .weeknav{width:100%;justify-content:space-between;}
     .stats-strip{width:100%;justify-content:flex-start;flex-wrap:wrap;}
-    .view-toggle{flex-wrap:wrap;gap:8px;}
-    .vtab{flex:1 1 auto;font-size:10px;padding:8px 10px;text-align:center;}
+    .view-toggle{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+    .vtab{flex:unset;width:100%;font-size:10px;padding:8px 6px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
     .weekgrid{grid-template-columns:1fr;gap:16px;}
     .daycard{min-height:auto;}
