@@ -8,6 +8,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2A2A28">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Weekly.Plan">
 <style>
   :root{
     --paper:#f6f1e6;
@@ -598,6 +606,27 @@
   .loose-card{border-left:4px dashed var(--ink-soft) !important;background:var(--paper);}
 
   /* ===== task editor modal ===== */
+  .search-chip{
+    padding:4px 11px;border:1.5px solid var(--paper-line);border-radius:20px;
+    font-size:11px;cursor:pointer;background:var(--card);color:var(--ink-soft);
+    font-family:'Be Vietnam Pro',sans-serif;font-weight:600;
+  }
+  .search-chip.active{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+  .countdown-widget{
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    background:var(--ink);color:var(--paper);
+    border-radius:12px;padding:12px 18px;margin:0 0 18px;
+    font-family:'Be Vietnam Pro',sans-serif;
+  }
+  .countdown-widget .cw-icon{font-size:22px;flex-shrink:0;}
+  .countdown-widget .cw-body{flex:1;min-width:180px;}
+  .countdown-widget .cw-title{font-size:12.5px;font-weight:600;opacity:.75;margin-bottom:2px;}
+  .countdown-widget .cw-name{font-size:14.5px;font-weight:700;}
+  .countdown-widget .cw-time{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.5px;}
+  .countdown-widget .cw-today{font-size:11.5px;opacity:.8;flex-shrink:0;padding:5px 10px;border:1px solid rgba(255,255,255,.25);border-radius:20px;}
+  .countdown-widget.overdue{background:var(--rose-deep);}
+  body.dark .countdown-widget{background:#3a4a3a;}
+  body.dark .countdown-widget.overdue{background:#6b3b3b;}
   .modal-overlay{
     display:none;position:fixed;inset:0;background:rgba(46,42,36,.45);z-index:100;
     align-items:center;justify-content:center;padding:16px;
@@ -1492,6 +1521,7 @@
     <div class="modal-content" style="max-width:460px;">
       <div class="modal-eyebrow">TÌM KIẾM</div>
       <input type="text" id="searchInput" class="modal-title-input" placeholder="Nhập tên công việc, dự án, ghi chú...">
+      <div id="searchFilters" style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 2px;"></div>
       <div id="searchResults" style="max-height:50vh;overflow-y:auto;margin-top:8px;"></div>
       <div class="modal-footer">
         <button class="btn" id="closeSearchModal">Đóng</button>
@@ -1515,6 +1545,8 @@
     <input type="text" id="userQuoteInput" placeholder="Viết một câu châm ngôn cho riêng bạn..." maxlength="140">
     <span class="quote-mark">"</span>
   </div>
+
+  <div id="countdownWidget" style="display:none;"></div>
 
   <div class="view-toggle">
     <button class="vtab active" id="tabFocus">🎯 Tiêu điểm</button>
@@ -1577,6 +1609,8 @@
         <a href="#" id="showAllDays">xem tất cả các ngày</a>
         <span class="fw-sep">·</span>
         <a href="#" id="showCalendar">xem lịch theo giờ</a>
+        <span class="fw-sep">·</span>
+        <a href="#" id="exportReportPng">📤 xuất báo cáo tuần (ảnh)</a>
       </div>
       <div class="day-pills" id="dayPills"></div>
       <div class="focus-panel" id="focusPanel"></div>
@@ -1681,6 +1715,11 @@
 
     <div class="field-label">Hạn chót (tuỳ chọn)</div>
     <input type="date" id="dtDeadlineInput">
+
+    <label style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink);margin:2px 0 12px;cursor:pointer;">
+      <input type="checkbox" id="dtRepeatWeekly" style="width:14px;height:14px;accent-color:var(--sage-deep);cursor:pointer;">
+      🔁 Lặp lại vào ngày này mỗi tuần
+    </label>
 
     <div class="subtask-box">
       <div class="subtask-box-head">SUBTASKS · <span id="dtStCount">0</span></div>
@@ -1807,14 +1846,27 @@ function celebrateTaskDone(checkEl){
   }
 }
 
-// ---- dark mode ----
+// ---- dark mode (tự động theo giờ, hoặc chọn tay) ----
+const LS_THEME_AUTO = "paperPlanner_themeAuto";
+function isNightNow(){
+  const h = new Date().getHours();
+  return h >= 18 || h < 6; // 18h -> 6h sáng hôm sau là "tối"
+}
+function themeAutoOn(){ return localStorage.getItem(LS_THEME_AUTO) !== '0'; }
 function applyTheme(){
-  const dark = localStorage.getItem(LS_THEME) === 'dark';
+  const dark = themeAutoOn() ? isNightNow() : (localStorage.getItem(LS_THEME) === 'dark');
   document.body.classList.toggle('dark', dark);
   const btn = document.getElementById('themeToggle');
-  if(btn) btn.textContent = dark ? '☀️' : '🌙';
+  if(btn){
+    btn.textContent = dark ? '☀️' : '🌙';
+    btn.title = themeAutoOn()
+      ? 'Đang tự động theo giờ (bấm để tự chọn, bấm đúp để quay lại tự động)'
+      : 'Chế độ tối/sáng (đang chọn tay — bấm đúp để về tự động theo giờ)';
+  }
 }
 applyTheme();
+// tự cập nhật lại theo giờ mỗi 10 phút nếu đang ở chế độ tự động
+setInterval(()=>{ if(themeAutoOn()) applyTheme(); }, 10*60*1000);
 
 // ---- state (in-memory only) ----
 let weekOffset = 0;
@@ -1869,10 +1921,11 @@ let editingTask = null, isNewTask = false, editorDay = 0;
 let weekClipboard = null;
 let eisenOpen = false;
 let userQuote = '';
+let recurringTasks = []; // [{id, dayIdx, name, type, hour, time, endTime}]
 
 // ---- persistence ----
 function collectState(){
-  return {weekOffset, weeks, idCounter, habits, projects, ptasks, userQuote};
+  return {weekOffset, weeks, idCounter, habits, projects, ptasks, userQuote, recurringTasks};
 }
 function saveState(){
   try{
@@ -1928,6 +1981,7 @@ function loadState(){
     if(Array.isArray(s.projects) && s.projects.length) projects = s.projects;
     if(Array.isArray(s.ptasks)) ptasks = s.ptasks;
     if(typeof s.userQuote === 'string') userQuote = s.userQuote;
+    if(Array.isArray(s.recurringTasks)) recurringTasks = s.recurringTasks;
     return true;
   }catch(e){ return false; }
 }
@@ -2038,6 +2092,7 @@ async function cloudPull(){
         if(Array.isArray(s.projects) && s.projects.length) projects = s.projects;
         if(Array.isArray(s.ptasks)) ptasks = s.ptasks;
         if(typeof s.userQuote === 'string') userQuote = s.userQuote;
+        if(Array.isArray(s.recurringTasks)) recurringTasks = s.recurringTasks;
         saveState();
         applyingRemoteState = false;
         render();
@@ -2185,6 +2240,19 @@ function ensureWeek(offset){
   wk.days.forEach(day=>{
     day.tasks.forEach(t=>{ if(!t.id) t.id = nextId(); });
   });
+  // sinh các task lặp lại hàng tuần cho tuần này nếu chưa có
+  recurringTasks.forEach(rt=>{
+    const day = wk.days[rt.dayIdx];
+    if(!day) return;
+    const exists = day.tasks.some(t=>t._recurId === rt.id);
+    if(!exists){
+      day.tasks.push({
+        id: nextId(), name: rt.name, type: rt.type||'', hour: rt.hour||'',
+        time: rt.time||'', endTime: rt.endTime||'', done:false, subtasks:[],
+        _open:false, _recurId: rt.id
+      });
+    }
+  });
   return wk;
 }
 
@@ -2212,6 +2280,7 @@ function render(){
   requestAnimationFrame(()=>{ renderScheduled = false; _renderImpl(); });
 }
 function _renderImpl(){
+  renderCountdownWidget();
   const monday = getMonday(weekOffset);
   const sunday = new Date(monday); sunday.setDate(monday.getDate()+6);
   document.getElementById('weekRange').textContent = fmtDate(monday)+" – "+fmtDate(sunday);
@@ -2855,6 +2924,7 @@ function openDayTaskModal(t, refreshFn){
   document.getElementById('dtDuration').value = t.hour || '';
   document.getElementById('dtDeadlineInput').value = t.deadline || '';
   document.getElementById('dtDescInput').value = t.description || '';
+  document.getElementById('dtRepeatWeekly').checked = !!t._recurId;
 
   const psel = document.getElementById('dtProjectSelect');
   const curProj = resolveTaskProject(t);
@@ -2867,10 +2937,41 @@ function openDayTaskModal(t, refreshFn){
   setTimeout(()=>document.getElementById('dtTitleInput').focus(), 80);
 }
 function closeDayTaskModal(){
+  applyRepeatToggle();
   document.getElementById('dayTaskModal').classList.remove('open');
   if(editingDayTaskRefresh) editingDayTaskRefresh();
   editingDayTask = null;
   editingDayTaskRefresh = null;
+}
+function findTaskDayIdx(taskId){
+  for(const off in weeks){
+    const wk = weeks[off];
+    for(let di=0; di<wk.days.length; di++){
+      if(wk.days[di].tasks.some(t=>t.id===taskId)) return di;
+    }
+  }
+  return null;
+}
+function applyRepeatToggle(){
+  const t = editingDayTask; if(!t) return;
+  const wantRepeat = document.getElementById('dtRepeatWeekly').checked;
+  if(wantRepeat){
+    const dayIdx = findTaskDayIdx(t.id);
+    if(dayIdx === null) return;
+    if(t._recurId){
+      // đã lặp sẵn -> cập nhật template theo nội dung mới nhất
+      const rt = recurringTasks.find(r=>r.id===t._recurId);
+      if(rt){ rt.name=t.name; rt.type=t.type; rt.hour=t.hour; rt.time=t.time; rt.endTime=t.endTime; }
+    } else {
+      const recurId = nextId();
+      t._recurId = recurId;
+      recurringTasks.push({id:recurId, dayIdx, name:t.name, type:t.type||'', hour:t.hour||'', time:t.time||'', endTime:t.endTime||''});
+    }
+  } else if(t._recurId){
+    recurringTasks = recurringTasks.filter(r=>r.id !== t._recurId);
+    delete t._recurId;
+  }
+  scheduleSave();
 }
 function renderDayModalSubtasks(){
   const t = editingDayTask; if(!t) return;
@@ -4687,7 +4788,14 @@ document.getElementById('soundToggle').addEventListener('click', ()=>{
 document.getElementById('themeToggle').addEventListener('click', ()=>{
   const nowDark = !document.body.classList.contains('dark');
   localStorage.setItem(LS_THEME, nowDark ? 'dark' : 'light');
+  localStorage.setItem(LS_THEME_AUTO, '0');
   applyTheme();
+  showAppToast('Đã chọn giao diện thủ công. Bấm đúp nút 🌙/☀️ để quay lại tự động theo giờ.');
+});
+document.getElementById('themeToggle').addEventListener('dblclick', ()=>{
+  localStorage.setItem(LS_THEME_AUTO, '1');
+  applyTheme();
+  showAppToast('🔄 Đã bật lại chế độ tối/sáng tự động theo giờ (18h–6h là tối).');
 });
 document.getElementById('copyWeekBtn').addEventListener('click', ()=>{
   const wk = ensureWeek(weekOffset);
@@ -4730,34 +4838,66 @@ document.getElementById('toggleEisen').addEventListener('click', ()=>{
 });
 
 /* ===== SEARCH ===== */
+let searchFilterStatus = 'all'; // all | done | pending
+let searchFilterKind = 'all';   // all | ptask | caltask
+function renderSearchFilters(){
+  const wrap = document.getElementById('searchFilters');
+  const statusChips = [
+    {v:'all', label:'Tất cả'},
+    {v:'pending', label:'Chưa xong'},
+    {v:'done', label:'Đã xong'},
+  ];
+  const kindChips = [
+    {v:'all', label:'Mọi loại'},
+    {v:'ptask', label:'📁 Dự án'},
+    {v:'caltask', label:'📅 Lịch tuần'},
+  ];
+  wrap.innerHTML =
+    statusChips.map(c=>`<span class="search-chip${searchFilterStatus===c.v?' active':''}" data-status="${c.v}">${c.label}</span>`).join('') +
+    '<span style="width:1px;background:var(--paper-line);margin:0 2px;"></span>' +
+    kindChips.map(c=>`<span class="search-chip${searchFilterKind===c.v?' active':''}" data-kind="${c.v}">${c.label}</span>`).join('');
+  wrap.querySelectorAll('[data-status]').forEach(el=>{
+    el.addEventListener('click', ()=>{ searchFilterStatus = el.dataset.status; renderSearchFilters(); runSearch(document.getElementById('searchInput').value); });
+  });
+  wrap.querySelectorAll('[data-kind]').forEach(el=>{
+    el.addEventListener('click', ()=>{ searchFilterKind = el.dataset.kind; renderSearchFilters(); runSearch(document.getElementById('searchInput').value); });
+  });
+}
 function runSearch(query){
   const q = query.trim().toLowerCase();
   const resultsEl = document.getElementById('searchResults');
-  if(!q){ resultsEl.innerHTML = '<div class="search-empty">Gõ để tìm trong công việc, dự án, ghi chú...</div>'; return; }
   const results = [];
-  ptasks.forEach(t=>{
-    const hay = [t.title, t.description].filter(Boolean).join(' ').toLowerCase();
-    if(hay.includes(q)){
+  if(searchFilterKind !== 'caltask'){
+    ptasks.forEach(t=>{
+      const hay = [t.title, t.description].filter(Boolean).join(' ').toLowerCase();
+      if(q && !hay.includes(q)) return;
+      const isDone = taskDone(t);
+      if(searchFilterStatus==='done' && !isDone) return;
+      if(searchFilterStatus==='pending' && isDone) return;
       const proj = projects.find(p=>p.id===t.projectId);
       results.push({kind:'ptask', id:t.id, title:t.title||'(không tên)', meta: proj ? proj.name : 'Task lẻ'});
-    }
-  });
-  Object.keys(weeks).forEach(offsetStr=>{
-    const off = Number(offsetStr);
-    const wk = weeks[off];
-    const monday = getMonday(off);
-    (wk.days||[]).forEach((day, di)=>{
-      (day.tasks||[]).forEach(t=>{
-        const hay = [t.name, t.description].filter(Boolean).join(' ').toLowerCase();
-        if(hay.includes(q)){
+    });
+  }
+  if(searchFilterKind !== 'ptask'){
+    Object.keys(weeks).forEach(offsetStr=>{
+      const off = Number(offsetStr);
+      const wk = weeks[off];
+      const monday = getMonday(off);
+      (wk.days||[]).forEach((day, di)=>{
+        (day.tasks||[]).forEach(t=>{
+          const hay = [t.name, t.description].filter(Boolean).join(' ').toLowerCase();
+          if(q && !hay.includes(q)) return;
+          if(searchFilterStatus==='done' && !t.done) return;
+          if(searchFilterStatus==='pending' && t.done) return;
           const dt = new Date(monday); dt.setDate(monday.getDate()+di);
           results.push({kind:'caltask', id:t.id, offset:off, dayIdx:di, title:t.name||'(không tên)', meta: fmtDate(dt)});
-        }
+        });
       });
     });
-  });
+  }
+  if(!q && searchFilterStatus==='all' && searchFilterKind==='all'){ resultsEl.innerHTML = '<div class="search-empty">Gõ để tìm, hoặc chọn bộ lọc bên trên...</div>'; return; }
   if(!results.length){ resultsEl.innerHTML = '<div class="search-empty">Không tìm thấy kết quả nào.</div>'; return; }
-  resultsEl.innerHTML = results.slice(0,40).map((r,i)=>`
+  resultsEl.innerHTML = results.slice(0,60).map((r,i)=>`
     <div class="search-result" data-i="${i}">
       <span class="sr-title">${escapeHtmlP(r.title)}</span>
       <span class="sr-meta">${r.kind==='ptask'?'📁 ':'📅 '}${escapeHtmlP(r.meta)}</span>
@@ -4783,6 +4923,8 @@ function openSearchModal(){
   document.getElementById('searchModal').classList.add('open');
   const input = document.getElementById('searchInput');
   input.value = '';
+  searchFilterStatus = 'all'; searchFilterKind = 'all';
+  renderSearchFilters();
   runSearch('');
   setTimeout(()=>input.focus(), 80);
 }
@@ -4873,9 +5015,177 @@ function checkDeadlineReminders(){
       new Notification('⏰ Sắp đến hạn: ' + (t.title||'Công việc'), {body: dt.toLocaleString('vi-VN')});
     }
   });
+  // Nhắc việc trong ngày hôm nay có đặt giờ bắt đầu
+  const todayIdx = (now.getDay() + 6) % 7; // 0=T2 ... 6=CN
+  const wk = weeks[0];
+  if(wk && wk.days[todayIdx]){
+    wk.days[todayIdx].tasks.forEach(t=>{
+      const key = 'day_' + t.id;
+      if(!t.time || t.done || notifiedIds.has(key)) return;
+      const [hh, mm] = t.time.split(':').map(Number);
+      if(isNaN(hh) || isNaN(mm)) return;
+      const dt = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm);
+      const diffMin = (dt - now) / 60000;
+      if(diffMin > 0 && diffMin <= 15){
+        notifiedIds.add(key);
+        new Notification('⏰ Sắp tới giờ: ' + (t.name || 'Công việc'), {body: 'Bắt đầu lúc ' + t.time});
+      }
+    });
+  }
 }
 setInterval(checkDeadlineReminders, 60000);
 checkDeadlineReminders();
+
+/* ===== WIDGET ĐẾM NGƯỢC VIỆC/GẦN NHẤT ===== */
+function collectUpcomingItems(){
+  const now = new Date();
+  const items = [];
+  ptasks.forEach(t=>{
+    if(!t.deadlineDate || taskDone(t)) return;
+    const dt = new Date(t.deadlineDate + 'T' + (t.deadlineTime || '23:59'));
+    items.push({name: t.title || '(không tên)', dt, kind:'📁'});
+  });
+  const todayIdx = (now.getDay() + 6) % 7;
+  const wk = weeks[0];
+  let todayRemaining = 0;
+  if(wk && wk.days[todayIdx]){
+    wk.days[todayIdx].tasks.forEach(t=>{
+      if(!t.done) todayRemaining++;
+      if(!t.time || t.done) return;
+      const [hh, mm] = t.time.split(':').map(Number);
+      if(isNaN(hh) || isNaN(mm)) return;
+      const dt = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm);
+      items.push({name: t.name || '(không tên)', dt, kind:'📅'});
+    });
+  }
+  items.sort((a,b)=>a.dt-b.dt);
+  const future = items.filter(i=>i.dt >= now);
+  return {nearest: future[0] || null, todayRemaining};
+}
+function fmtCountdown(ms){
+  if(ms < 0) ms = 0;
+  const totalSec = Math.floor(ms/1000);
+  const d = Math.floor(totalSec/86400);
+  const h = Math.floor((totalSec%86400)/3600);
+  const m = Math.floor((totalSec%3600)/60);
+  const s = totalSec%60;
+  if(d>0) return `${d} ngày ${h}g`;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+function renderCountdownWidget(){
+  const el = document.getElementById('countdownWidget');
+  const { nearest, todayRemaining } = collectUpcomingItems();
+  if(!nearest){
+    el.style.display = 'none';
+    el.innerHTML = '';
+    return;
+  }
+  el.style.display = 'flex';
+  const now = new Date();
+  const diff = nearest.dt - now;
+  el.className = 'countdown-widget' + (diff<=0 ? ' overdue' : '');
+  el.innerHTML = `
+    <div class="cw-icon">${nearest.kind}</div>
+    <div class="cw-body">
+      <div class="cw-title">Việc gần nhất</div>
+      <div class="cw-name">${escapeHtmlP(nearest.name)}</div>
+    </div>
+    <div class="cw-time">${fmtCountdown(diff)}</div>
+    <div class="cw-today">📋 ${todayRemaining} việc hôm nay chưa xong</div>
+  `;
+}
+setInterval(renderCountdownWidget, 1000);
+
+/* ===== XUẤT BÁO CÁO TUẦN RA ẢNH PNG ===== */
+async function exportWeeklyReportPng(){
+  if(typeof html2canvas === 'undefined'){
+    showAppToast('Không tải được thư viện xuất ảnh, kiểm tra kết nối mạng rồi thử lại.');
+    return;
+  }
+  const wk = ensureWeek(weekOffset);
+  const monday = getMonday(weekOffset);
+  const sunday = new Date(monday); sunday.setDate(monday.getDate()+6);
+
+  let total=0, done=0;
+  const dayRows = wk.days.map((day, di)=>{
+    const dt = new Date(monday); dt.setDate(monday.getDate()+di);
+    const t = day.tasks.length, d = day.tasks.filter(x=>x.done).length;
+    total += t; done += d;
+    const pct = t? Math.round(d/t*100) : 0;
+    return {name: dayNamesVN[di], date: fmtDate(dt), t, d, pct};
+  });
+  const overallPct = total? Math.round(done/total*100) : 0;
+  const grade = gradeFor(overallPct);
+
+  const habitRows = habits.map(h=>{
+    const doneCount = (h.ticks||[]).filter(Boolean).length;
+    return {name: h.name, doneCount, total: 7};
+  });
+
+  const card = document.createElement('div');
+  card.style.cssText = 'width:640px;background:#F4EFE3;color:#2A2A28;font-family:"Be Vietnam Pro",sans-serif;padding:32px;box-sizing:border-box;';
+  card.innerHTML = `
+    <div style="font-family:'Fraunces',serif;font-size:30px;font-weight:700;margin-bottom:2px;">Weekly.Plan</div>
+    <div style="font-size:12px;letter-spacing:1px;opacity:.65;margin-bottom:18px;">BÁO CÁO TUẦN · ${fmtDate(monday)} – ${fmtDate(sunday)}</div>
+    <div style="display:flex;gap:14px;margin-bottom:20px;">
+      <div style="flex:1;background:#fff;border:1.5px solid #2A2A28;border-radius:10px;padding:14px 16px;text-align:center;">
+        <div style="font-size:26px;font-weight:800;">${overallPct}%</div>
+        <div style="font-size:11px;opacity:.7;">Hoàn thành tuần</div>
+      </div>
+      <div style="flex:1;background:#fff;border:1.5px solid #2A2A28;border-radius:10px;padding:14px 16px;text-align:center;">
+        <div style="font-size:26px;font-weight:800;">Hạng ${grade}</div>
+        <div style="font-size:11px;opacity:.7;">Xếp hạng tuần</div>
+      </div>
+      <div style="flex:1;background:#fff;border:1.5px solid #2A2A28;border-radius:10px;padding:14px 16px;text-align:center;">
+        <div style="font-size:26px;font-weight:800;">${done}/${total}</div>
+        <div style="font-size:11px;opacity:.7;">Công việc</div>
+      </div>
+    </div>
+    <div style="font-size:13px;font-weight:700;margin-bottom:8px;">📅 Chi tiết theo ngày</div>
+    <div style="border:1.5px solid #2A2A28;border-radius:10px;overflow:hidden;margin-bottom:20px;">
+      ${dayRows.map((r,i)=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;${i<6?'border-bottom:1px solid #ddd6c4;':''}background:${i%2?'#fff':'#F4EFE3'};">
+          <div style="width:90px;font-size:12.5px;font-weight:600;">${r.name}</div>
+          <div style="width:80px;font-size:10.5px;opacity:.6;">${r.date}</div>
+          <div style="flex:1;height:8px;background:#e4ddc9;border-radius:6px;overflow:hidden;">
+            <div style="height:100%;width:${r.pct}%;background:${r.pct>=70?'#8FA27F':r.pct>=40?'#D3A94C':'#c97f77'};"></div>
+          </div>
+          <div style="width:70px;text-align:right;font-size:11.5px;">${r.d}/${r.t} · ${r.pct}%</div>
+        </div>`).join('')}
+    </div>
+    ${habitRows.length? `
+    <div style="font-size:13px;font-weight:700;margin-bottom:8px;">🔁 Thói quen tuần này</div>
+    <div style="border:1.5px solid #2A2A28;border-radius:10px;overflow:hidden;margin-bottom:16px;">
+      ${habitRows.map((r,i)=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;${i<habitRows.length-1?'border-bottom:1px solid #ddd6c4;':''}background:${i%2?'#fff':'#F4EFE3'};">
+          <div style="flex:1;font-size:12.5px;font-weight:600;">${escapeHtmlP(r.name)}</div>
+          <div style="font-size:11.5px;">${r.doneCount}/${r.total} ngày</div>
+        </div>`).join('')}
+    </div>` : ''}
+    <div style="font-size:10.5px;opacity:.5;text-align:right;margin-top:6px;">Xuất lúc ${new Date().toLocaleString('vi-VN')}</div>
+  `;
+  card.style.position = 'fixed';
+  card.style.left = '-9999px';
+  card.style.top = '0';
+  document.body.appendChild(card);
+  try{
+    const canvas = await html2canvas(card, {backgroundColor:'#F4EFE3', scale:2});
+    const link = document.createElement('a');
+    link.download = `weekly-plan-bao-cao-${fmtDate(monday).replace(/\//g,'-')}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    showAppToast('📤 Đã xuất báo cáo tuần ra ảnh PNG.');
+  } catch(e){
+    console.error(e);
+    showAppToast('Có lỗi khi xuất ảnh, thử lại nhé.');
+  } finally {
+    document.body.removeChild(card);
+  }
+}
+document.getElementById('exportReportPng').addEventListener('click', (e)=>{
+  e.preventDefault();
+  exportWeeklyReportPng();
+});
 
 const userQuoteInput = document.getElementById('userQuoteInput');
 userQuoteInput.value = userQuote;
@@ -4885,6 +5195,13 @@ userQuoteInput.addEventListener('input', ()=>{
 });
 
 render();
+
+// ---- PWA: đăng ký service worker để chạy được khi mất mạng ----
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('SW register failed:', err));
+  });
+}
 </script>
 </body>
 </html>
