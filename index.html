@@ -2010,8 +2010,10 @@ function scheduleCloudSave(){
   cloudSyncTimer = setTimeout(cloudPush, 1000);
 }
 
+let cloudPullInProgress = false;
 async function cloudPull(){
-  if(!sb || !currentUser) return;
+  if(!sb || !currentUser || cloudPullInProgress) return;
+  cloudPullInProgress = true;
   try{
     setSyncStatus('Đang tải dữ liệu…', true);
     const { data, error } = await sb.from('planner_data').select('data, updated_at').eq('user_id', currentUser.id).maybeSingle();
@@ -2055,6 +2057,8 @@ async function cloudPull(){
   }catch(e){
     setSyncStatus('⚠️ Lỗi tải dữ liệu', true);
     console.error('cloudPull error', e);
+  } finally {
+    cloudPullInProgress = false;
   }
 }
 
@@ -2062,15 +2066,23 @@ async function initSupabaseSync(){
   if(!syncConfigured()){ updateAuthBtn(); return; }
   sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+  let lastPulledUserId = null;
+
   const { data: { session } } = await sb.auth.getSession();
   currentUser = session ? session.user : null;
   updateAuthBtn();
-  if(currentUser) cloudPull();
+  if(currentUser){ lastPulledUserId = currentUser.id; cloudPull(); }
 
   sb.auth.onAuthStateChange((event, session)=>{
     currentUser = session ? session.user : null;
     updateAuthBtn();
-    if(event === 'SIGNED_IN') cloudPull();
+    // Supabase có thể bắn lại 'SIGNED_IN' mỗi khi tab được focus lại dù chưa
+    // đăng xuất/đăng nhập gì mới, nên chỉ pull khi đây thực sự là user mới.
+    if(event === 'SIGNED_IN' && currentUser && currentUser.id !== lastPulledUserId){
+      lastPulledUserId = currentUser.id;
+      cloudPull();
+    }
+    if(event === 'SIGNED_OUT'){ lastPulledUserId = null; }
   });
 
   let authMode = 'signin'; // 'signin' | 'signup'
