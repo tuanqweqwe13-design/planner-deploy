@@ -3282,6 +3282,7 @@ function renderHabits(){
 
     row.querySelector('.hname').addEventListener('blur', e=>{
       h.name = e.target.textContent.trim() || h.name;
+      scheduleSave();
     });
   });
   list.querySelectorAll('.habit-box').forEach(box=>{
@@ -3291,6 +3292,7 @@ function renderHabits(){
       habits[hi].ticks[di] = on;
       const dt = new Date(mon); dt.setDate(mon.getDate()+Number(di));
       habits[hi].log[dateKey(dt)] = on;
+      scheduleSave();
       renderHabits();
     });
   });
@@ -3601,6 +3603,7 @@ function renderProjects(){
       ptasks = ptasks.filter(t=>t.projectId!==p.id);
       dts.forEach(t=>{ t.projectId=''; delete t.project; });
       projects.splice(projects.indexOf(p),1);
+      scheduleSave();
       renderProjects();
     });
     card.querySelector('.project-expand').addEventListener('click', ()=> openProjectModal(p.id));
@@ -3664,6 +3667,7 @@ function quickToggleTask(taskId){
   const allDone = t.subtasks.every(s=>s.done);
   t.subtasks.forEach(s=> s.done = !allDone);
   if(!allDone) playDoneSound(); else playUndoSound();
+  scheduleSave();
   renderProjects();
 }
 function deleteProjectTask(id){
@@ -3671,8 +3675,9 @@ function deleteProjectTask(id){
   if(idx<0) return;
   const removed = ptasks[idx];
   ptasks = ptasks.filter(t=>t.id!==id);
+  scheduleSave();
   renderProjects();
-  pushUndo('Đã xoá "'+(removed.title||'công việc')+'".', ()=>{ ptasks.splice(idx,0,removed); renderProjects(); });
+  pushUndo('Đã xoá "'+(removed.title||'công việc')+'".', ()=>{ ptasks.splice(idx,0,removed); scheduleSave(); renderProjects(); });
 }
 
 /* ===== PROJECT DETAIL MODAL ===== */
@@ -3798,6 +3803,7 @@ document.getElementById('saveProjectModalBtn').addEventListener('click', ()=>{
   const activeDot = document.querySelector('#projectColorRow .proj-color-dot.active');
   if(activeDot) p.color = activeDot.dataset.color;
   closeProjectModal();
+  scheduleSave();
   renderProjects();
 });
 document.getElementById('closeProjectModalBtn').addEventListener('click', closeProjectModal);
@@ -3810,10 +3816,12 @@ document.getElementById('deleteProjectFromModalBtn').addEventListener('click', a
   ptasks = ptasks.filter(t=>t.projectId!==p.id);
   projects = projects.filter(x=>x.id!==p.id);
   closeProjectModal();
+  scheduleSave();
   renderProjects();
   pushUndo('Đã xoá dự án "'+(p.name||'')+'".', ()=>{
     projects.splice(pIdx,0,p);
     ptasks = ptasks.concat(removedTasks);
+    scheduleSave();
     renderProjects();
   });
 });
@@ -4170,11 +4178,6 @@ function buildProjectRow(item, refreshFn, dayIdx, dayDate, itemIdx){
   }
 
   return row;
-}
-function formatFileSize(bytes){
-  if(bytes < 1024) return bytes+' B';
-  if(bytes < 1024*1024) return (bytes/1024).toFixed(1)+' KB';
-  return (bytes/(1024*1024)).toFixed(1)+' MB';
 }
 function readFilesAsAttachments(fileList, cb){
   const files = Array.from(fileList || []);
@@ -5235,6 +5238,24 @@ function collectPlanItems(){
       raw: t
     });
   });
+  ptasks.forEach(t=>{
+    const proj = projects.find(p=>p.id===t.projectId);
+    (t.subtasks||[]).forEach(s=>{
+      if(s.done) return;
+      if(typeof s.day !== 'number' || typeof s.weekOffset !== 'number') return;
+      const monday = getMonday(s.weekOffset);
+      const dt = new Date(monday); dt.setDate(monday.getDate()+s.day);
+      items.push({
+        kind:'psub', id:s.id, offset:s.weekOffset, dayIdx:s.day,
+        title: s.note || t.title || '(không tên)',
+        sub: (proj ? proj.name+' • ' : '') + (t.title || 'Task lẻ'),
+        date: dt,
+        reminder: '',
+        starred: !!s.starred,
+        raw: s
+      });
+    });
+  });
   items.sort((a,b)=> a.date - b.date || a.title.localeCompare(b.title));
   return items;
 }
@@ -5273,7 +5294,7 @@ function planRowHtml(it){
   const isOverdue = d < today;
   const pomoCount = it.kind==='cal' ? pomoSessionCountForTask(it.id) : 0;
   return `
-  <div class="plan-row" data-kind="${it.kind}" data-id="${it.id}" ${it.kind==='cal' ? `data-offset="${it.offset}" data-dayidx="${it.dayIdx}"` : ''}>
+  <div class="plan-row" data-kind="${it.kind}" data-id="${it.id}" ${(it.kind==='cal'||it.kind==='psub') ? `data-offset="${it.offset}" data-dayidx="${it.dayIdx}"` : ''}>
     <div class="task-check"></div>
     <div class="plan-row-body">
       <div class="plan-row-title">${escapeHtmlP(it.title)}${pomoCount ? `<span class="plan-pomo-badge" title="${pomoCount} phiên Pomodoro">🍅 x${pomoCount}</span>` : ''}</div>
@@ -5292,6 +5313,13 @@ function findPlanItem(kind, id, offset, dayIdx){
     const wk = weeks[offset];
     const day = wk && wk.days[dayIdx];
     return day ? day.tasks.find(x=>String(x.id)===String(id)) : null;
+  }
+  if(kind==='psub'){
+    for(const t of ptasks){
+      const s = (t.subtasks||[]).find(x=>String(x.id)===String(id));
+      if(s) return s;
+    }
+    return null;
   }
   return ptasks.find(x=>String(x.id)===String(id));
 }
@@ -5335,6 +5363,9 @@ function renderPlanned(){
       const t = findPlanItem(kind, id, offset, dayIdx);
       if(!t) return;
       if(kind==='cal'){
+        t.done = !t.done;
+        if(t.done) celebrateTaskDone(e.currentTarget); else playUndoSound();
+      } else if(kind==='psub'){
         t.done = !t.done;
         if(t.done) celebrateTaskDone(e.currentTarget); else playUndoSound();
       } else {
@@ -5616,10 +5647,12 @@ document.getElementById('prevWeek').addEventListener('click', ()=>{ weekOffset--
 document.getElementById('nextWeek').addEventListener('click', ()=>{ weekOffset++; focusDayIdx=null; render(); });
 document.getElementById('addHabit').addEventListener('click', ()=>{
   habits.push({name:"Thói quen mới", ticks:[false,false,false,false,false,false,false], log:{}});
+  scheduleSave();
   renderHabits();
 });
 document.getElementById('addProject').addEventListener('click', ()=>{
   projects.push({id: uid(), name:"Dự án mới", color: PROJECT_COLORS[projects.length % PROJECT_COLORS.length], tags:[]});
+  scheduleSave();
   renderProjects();
 });
 document.getElementById('cancelTaskBtn').addEventListener('click', closeTaskModal);
