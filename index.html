@@ -47,7 +47,7 @@
     --teal:#6fa8a2;
     --plum:#b79dc4;
     --card:#2a2823;
-    --shadow: 2px 3px 0 rgba(0,0,0,0.35);
+    --shadow: 2px 3px 0 rgba(0,0,0,0.22);
   }
   body.dark input, body.dark select, body.dark textarea,
   body.dark .habit-box, body.dark .hs-day, body.dark .habit-stat-card,
@@ -448,15 +448,66 @@
     display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;margin-top:1px;
   }
   .project-expand:hover{opacity:1;transform:scale(1.15);}
+  .project-collapse-btn{
+    width:15px;height:18px;border:none;background:transparent;cursor:pointer;font-size:11px;
+    color:var(--ink-soft);transition:transform .18s,opacity .15s;flex-shrink:0;margin-top:4px;
+    display:flex;align-items:center;justify-content:center;opacity:.55;padding:0;
+  }
+  .project-collapse-btn:hover{opacity:1;}
+  .project-card.collapsed .project-collapse-btn{transform:rotate(-90deg);}
+  .project-card.collapsed .project-body{display:none;}
+
+  .proj-toolbar-row{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px;}
+  .proj-tool-chip{
+    font-family:'Be Vietnam Pro',sans-serif;font-size:10.5px;font-weight:700;
+    padding:4px 9px;border-radius:12px;border:1.5px solid var(--paper-line);
+    background:var(--paper);color:var(--ink-soft);cursor:pointer;transition:background .15s,color .15s,border-color .15s;
+  }
+  .proj-tool-chip:hover{color:var(--ink);}
+  .proj-tool-chip.on{background:var(--sage-deep);border-color:var(--sage-deep);color:#fff;}
+
+  .project-pin-btn{
+    width:14px;height:16px;border:none;background:transparent;cursor:pointer;font-size:10px;
+    opacity:.3;flex-shrink:0;margin-top:4px;padding:0;transition:opacity .15s,transform .15s;
+  }
+  .project-pin-btn:hover{transform:scale(1.15);}
+  .project-pin-btn.pinned{opacity:1;color:var(--gold);}
+  .project-card .project-drag-handle{
+    width:0;overflow:hidden;height:20px;font-size:11px;opacity:0;flex-shrink:0;cursor:grab;margin-top:4px;
+    display:flex;align-items:center;justify-content:center;color:var(--ink-soft);
+    letter-spacing:-2px;user-select:none;transition:opacity .15s,width .15s;
+  }
+  .project-card:hover .project-drag-handle{opacity:.5;width:12px;}
+  .project-card .project-drag-handle:active{cursor:grabbing;}
+  .project-card.dragging{opacity:.4;}
+  .project-card.drag-over-top{box-shadow:inset 0 3px 0 var(--sage-deep);}
+  .project-card.drag-over-bottom{box-shadow:inset 0 -3px 0 var(--sage-deep);}
+  .project-card.pinned-card{box-shadow:0 0 0 1.5px color-mix(in srgb, var(--gold) 55%, transparent);}
+
+  .task-done-group{margin-top:2px;}
+  .task-done-toggle{
+    width:100%;text-align:left;background:transparent;border:none;cursor:pointer;
+    font-family:'Be Vietnam Pro',sans-serif;font-size:10.5px;font-weight:700;color:var(--ink-soft);
+    padding:5px 4px;transition:color .15s;
+  }
+  .task-done-toggle:hover{color:var(--ink);}
+  .task-done-group .task-row-list.done-list{display:none;}
+  .task-done-group.expanded .task-row-list.done-list{display:flex;}
+  .task-done-group.expanded .task-done-toggle{color:var(--ink);}
+
+  #projectList.compact .project-card .task-row{padding:2px 6px;font-size:10.5px;}
+  #projectList.compact .project-head{padding:6px 10px;}
+  #projectList.compact .project-body{padding:0 10px 6px;}
+  #projectList.compact .task-row-list{gap:0;}
   .project-card{
     border:1px solid var(--paper-line);border-radius:10px;margin-bottom:10px;background:#fff;
     overflow:hidden;transition:box-shadow .18s cubic-bezier(.2,.8,.3,1.3),transform .18s cubic-bezier(.2,.8,.3,1.3);
   }
-  .project-card:hover{box-shadow:0 16px 30px rgba(46,42,36,.22);transform:translateY(-6px) scale(1.02) rotate(0deg);}
+  .project-card:hover{box-shadow:0 10px 18px rgba(46,42,36,.14);transform:translateY(-3px) scale(1.008) rotate(0deg);}
   .project-card:nth-child(odd){transform:rotate(-0.35deg);}
   .project-card:nth-child(even){transform:rotate(0.35deg);}
   .project-card:nth-child(odd):hover, .project-card:nth-child(even):hover{transform:translateY(-3px) scale(1.012) rotate(0deg);}
-  .project-head{display:flex;align-items:flex-start;gap:8px;padding:10px 10px;cursor:pointer;}
+  .project-head{display:flex;align-items:flex-start;gap:4px;padding:10px 10px;cursor:pointer;}
   .project-head .project-name{cursor:text;}
   .project-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;box-shadow:0 0 0 3px rgba(0,0,0,.04);margin-top:5px;}
   .project-body{padding:2px 10px 10px;}
@@ -557,8 +608,18 @@
   .task-row-list{display:flex;flex-direction:column;gap:1px;}
   .project-card .task-row{
     display:flex;align-items:center;gap:7px;padding:6px 6px;border-radius:7px;font-size:11.5px;
-    transition:background .15s,transform .15s;
+    transition:background .15s,transform .15s,opacity .15s,box-shadow .15s;position:relative;
   }
+  .project-card .task-row.dragging{opacity:.35;}
+  .project-card .task-row.drag-over-top{box-shadow:inset 0 3px 0 var(--sage-deep);}
+  .project-card .task-row.drag-over-bottom{box-shadow:inset 0 -3px 0 var(--sage-deep);}
+  .project-card .task-row .drag-handle{
+    width:12px;height:20px;font-size:11px;opacity:0;margin-right:-3px;flex-shrink:0;cursor:grab;
+    display:flex;align-items:center;justify-content:center;color:var(--ink-soft);
+    letter-spacing:-2px;user-select:none;transition:opacity .15s;
+  }
+  .project-card .task-row:hover .drag-handle{opacity:.55;}
+  .project-card .task-row .drag-handle:active{cursor:grabbing;}
   .project-card .task-row:hover{background:var(--paper);transform:translateY(-2px) scale(1.01);box-shadow:0 6px 12px rgba(46,42,36,.08);position:relative;z-index:2;}
   .empty-hint{font-size:11px;color:var(--ink-soft);padding:6px 2px;font-style:italic;}
 
@@ -621,8 +682,9 @@
   }
 
   .project-name{
-    flex:1;min-width:0;font-family:'Be Vietnam Pro',sans-serif;font-weight:800;font-size:13px;
+    flex:1;min-width:24px;font-family:'Be Vietnam Pro',sans-serif;font-weight:800;font-size:13px;
     border:none;background:transparent;color:var(--ink);outline:none;padding:2px 0;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   }
   .project-name:focus{border-bottom:1px dashed var(--sage-deep);}
   .loose-card{border-left:4px dashed var(--ink-soft) !important;background:var(--paper);}
@@ -764,15 +826,15 @@
     border:1px solid var(--paper-line);border-radius:6px;padding:7px 9px;background:#fff;color:var(--ink);
   }
   .modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;}
-  .modal-footer .btn{
+  .btn{
     font-family:'Be Vietnam Pro',sans-serif;font-size:11.5px;font-weight:700;padding:7px 16px;
     border-radius:6px;border:1px solid var(--paper-line);background:#fff;color:var(--ink);cursor:pointer;
     transition:transform .15s,box-shadow .15s,background .15s;
   }
-  .modal-footer .btn:hover{transform:translateY(-1px);box-shadow:0 3px 8px rgba(46,42,36,.15);}
-  .modal-footer .btn:active{transform:translateY(0);}
-  .modal-footer .btn-primary{background:var(--sage);border-color:var(--sage-deep);color:#fff;}
-  .modal-footer .btn-primary:hover{background:var(--sage-deep);}
+  .btn:hover{transform:translateY(-1px);box-shadow:0 3px 8px rgba(46,42,36,.15);}
+  .btn:active{transform:translateY(0);}
+  .btn-primary{background:var(--sage);border-color:var(--sage-deep);color:#fff;}
+  .btn-primary:hover{background:var(--sage-deep);}
   .proj-color-row{display:flex;gap:9px;margin:2px 0 16px;}
   .proj-color-dot{
     width:26px;height:26px;border-radius:8px;cursor:pointer;border:2px solid transparent;
@@ -1412,6 +1474,191 @@
     background:var(--card);border:1.5px solid var(--paper-line);border-radius:16px;padding:18px 20px;box-shadow:var(--shadow);
   }
   .pomo-journal-section h3{margin:0 0 12px;font-family:'Fraunces',serif;font-size:16px;color:var(--ink);}
+  .pj-tag-row{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px;}
+  .pj-tag-chip{
+    font-family:'Be Vietnam Pro',sans-serif;font-size:12px;font-weight:600;
+    padding:5px 11px;border-radius:16px;border:1.5px solid var(--paper-line);
+    background:var(--paper);color:var(--ink-soft);cursor:pointer;
+    transition:transform .12s,background .12s,color .12s,border-color .12s;user-select:none;
+  }
+  .pj-tag-chip:hover{transform:translateY(-1px);}
+  .pj-tag-chip.on{background:var(--sage-deep);border-color:var(--sage-deep);color:#fff;}
+  .pj-td-tags{display:flex;flex-wrap:wrap;gap:4px;}
+  .pj-td-tag{
+    font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;
+    background:color-mix(in srgb, var(--sage-deep) 16%, transparent);color:var(--sage-deep);white-space:nowrap;
+  }
+  .pj-insight{
+    font-family:'Be Vietnam Pro',sans-serif;font-size:12.5px;color:var(--ink);
+    background:color-mix(in srgb, var(--gold) 12%, transparent);
+    border:1.5px dashed color-mix(in srgb, var(--gold) 55%, var(--ink-soft));
+    border-radius:10px;padding:10px 14px;margin-bottom:14px;line-height:1.6;
+  }
+  .pj-insight b{color:var(--rust);}
+
+  /* ---- Panel gộp: Động lực & thử thách (Mục tiêu / Vườn / Thưởng / Cược / Giao diện) ---- */
+  .pomo-motiv-panel{
+    margin:10px 0 4px;border-radius:12px;border:1.5px solid var(--paper-line);
+    background:color-mix(in srgb, var(--sage) 8%, transparent);overflow:hidden;
+  }
+  .pomo-motiv-toggle{
+    width:100%;display:flex;align-items:center;justify-content:space-between;
+    padding:9px 12px;background:none;border:none;cursor:pointer;
+    font-family:'Be Vietnam Pro',sans-serif;font-size:12.5px;font-weight:700;color:var(--ink);
+  }
+  .pomo-motiv-toggle:hover{background:color-mix(in srgb, var(--sage) 10%, transparent);}
+  .pomo-motiv-toggle-arrow{color:var(--ink-soft);font-size:11px;transition:transform .2s;}
+  .pomo-motiv-body{padding:0 12px 12px;}
+  .pomo-motiv-subtabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;}
+  .pomo-motiv-subtab{
+    padding:4px 9px;border-radius:8px;border:1.5px solid var(--paper-line);background:var(--card);
+    font-family:'Be Vietnam Pro',sans-serif;font-size:11px;color:var(--ink-soft);cursor:pointer;white-space:nowrap;
+    transition:transform .12s;
+  }
+  .pomo-motiv-subtab:hover{transform:translateY(-1px);}
+  .pomo-motiv-subtab.active{background:var(--sage-deep);color:#fff;border-color:var(--sage-deep);font-weight:700;}
+  .pomo-motiv-sec{font-family:'Be Vietnam Pro',sans-serif;font-size:12px;color:var(--ink);animation:pomoSecFade .18s ease;}
+  @keyframes pomoSecFade{from{opacity:0;transform:translateY(2px);}to{opacity:1;transform:translateY(0);}}
+
+  .pomo-motiv-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+  .pomo-streak{font-weight:700;color:var(--rust);}
+  .pomo-goal-row{display:flex;align-items:center;gap:8px;flex:1;min-width:160px;}
+  .pomo-goal-row input{width:44px;padding:3px 5px;border:1.5px solid var(--paper-line);border-radius:6px;background:var(--card);color:var(--ink);font-size:12px;text-align:center;}
+  .pomo-goal-bar{flex:1;height:8px;border-radius:5px;background:var(--paper-line);overflow:hidden;min-width:60px;}
+  .pomo-goal-bar-fill{height:100%;background:var(--sage-deep);transition:width .3s;}
+  .pomo-badges-row{display:flex;gap:6px;flex-wrap:wrap;}
+
+  .pomo-garden-head{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:700;color:var(--ink);}
+  .pomo-garden-stage{font-weight:600;color:var(--sage-deep);}
+  .pomo-garden-plant{display:flex;align-items:flex-end;justify-content:center;margin:2px 0;transition:transform .25s;}
+  .pomo-garden-plant svg{overflow:visible;}
+  .pomo-garden-plant rect, .pomo-garden-plant ellipse, .pomo-garden-plant circle{transition:all .4s ease;}
+  .pomo-garden-hint{font-size:11px;color:var(--ink-soft);text-align:center;line-height:1.4;}
+  .wilt-flash{animation:pomoWiltShake .9s ease;}
+  @keyframes pomoWiltShake{
+    0%{transform:rotate(0deg);}
+    20%{transform:rotate(-4deg);}
+    40%{transform:rotate(3deg);}
+    60%{transform:rotate(-2deg);}
+    100%{transform:rotate(0deg);}
+  }
+
+  .pomo-estimate-row{
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 0;
+    font-family:'Be Vietnam Pro',sans-serif;font-size:12px;color:var(--ink);
+  }
+  .pomo-estimate-row label{display:flex;align-items:center;gap:6px;}
+  .pomo-estimate-row input[type=number]{
+    width:52px;padding:3px 6px;border:1.5px solid var(--paper-line);border-radius:6px;
+    background:var(--card);color:var(--ink);font-size:12px;text-align:center;
+  }
+  .pomo-estimate-compare{font-size:11.5px;color:var(--ink-soft);}
+  .pomo-estimate-compare.over{color:var(--rust);font-weight:700;}
+  .pomo-estimate-compare.under{color:var(--sage-deep);font-weight:700;}
+
+  .pomo-reward-list{display:flex;flex-direction:column;gap:6px;margin-bottom:8px;}
+  .pomo-reward-item{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+    padding:6px 9px;border-radius:8px;background:var(--card);border:1.5px solid var(--paper-line);
+    font-size:11.5px;
+  }
+  .pomo-reward-item.done{border-color:var(--sage-deep);background:color-mix(in srgb, var(--sage) 18%, var(--card));}
+  .pomo-reward-item .rw-txt{flex:1;}
+  .pomo-reward-item .rw-progress{font-size:11px;color:var(--ink-soft);white-space:nowrap;}
+  .pomo-reward-item .rw-del{
+    border:none;background:none;color:var(--ink-soft);cursor:pointer;font-size:13px;padding:0 2px;
+  }
+  .pomo-reward-item .rw-claim{
+    border:1.5px solid var(--sage-deep);background:var(--sage-deep);color:#fff;border-radius:6px;
+    font-size:11px;padding:3px 8px;cursor:pointer;white-space:nowrap;
+  }
+  .pomo-reward-add{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+  .pomo-reward-add input[type=text]{
+    flex:1;min-width:140px;padding:7px 9px;border:1.5px solid var(--paper-line);border-radius:6px;
+    background:var(--card);color:var(--ink);font-size:12px;box-sizing:border-box;
+    font-family:'Be Vietnam Pro',sans-serif;
+  }
+  .pomo-reward-add input[type=number]{
+    padding:7px 6px;border:1.5px solid var(--paper-line);border-radius:6px;
+    background:var(--card);color:var(--ink);font-size:12px;text-align:center;box-sizing:border-box;
+    font-family:'Be Vietnam Pro',sans-serif;
+  }
+  .pomo-reward-add .btn{flex-shrink:0;}
+
+  .pomo-bet-add{display:flex;flex-direction:column;gap:8px;}
+  .pomo-bet-add select{
+    width:100%;padding:7px 9px;border:1.5px solid var(--paper-line);border-radius:6px;
+    background:var(--card);color:var(--ink);font-size:12px;box-sizing:border-box;
+    font-family:'Be Vietnam Pro',sans-serif;cursor:pointer;
+  }
+  .pomo-bet-add-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .pomo-bet-add-row label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-soft);font-weight:600;}
+  .pomo-bet-add-row input[type=time]{
+    padding:6px 8px;border:1.5px solid var(--paper-line);border-radius:6px;
+    background:var(--card);color:var(--ink);font-size:12px;box-sizing:border-box;
+    font-family:'Be Vietnam Pro',sans-serif;
+  }
+  .pomo-bet-add-row .btn{flex-shrink:0;margin-left:auto;}
+  .pomo-bet-status-box{
+    padding:8px 10px;border-radius:8px;background:var(--card);border:1.5px solid var(--paper-line);
+    margin-bottom:6px;line-height:1.5;font-size:12px;
+  }
+  .pomo-bet-status-box.won{border-color:var(--sage-deep);background:color-mix(in srgb, var(--sage) 18%, var(--card));}
+  .pomo-bet-status-box.lost{border-color:var(--ink-soft);opacity:.75;}
+  .pomo-bet-status-box .bet-cancel{
+    border:none;background:none;color:var(--ink-soft);cursor:pointer;font-size:11px;text-decoration:underline;margin-top:4px;
+  }
+
+  .pomo-badge-chip{
+    font-size:11px;font-weight:700;padding:3px 9px;border-radius:12px;
+    background:color-mix(in srgb, var(--gold) 25%, transparent);color:#8a6a1c;white-space:nowrap;
+  }
+  body.dark .pomo-badge-chip{color:var(--gold);}
+  body.theme-ocean{
+    --sage:#6fa3b8; --sage-deep:#3f7f96; --gold:#5aa6a1; --rust:#2f6f8a;
+    --rose:#7fb8c9; --rose-deep:#4a8fa3; --teal:#3f8fa0; --plum:#5f9fb0;
+  }
+  body.theme-sunset{
+    --sage:#e0a45c; --sage-deep:#c97a3d; --gold:#e8b64a; --rust:#c9603a;
+    --rose:#e08a72; --rose-deep:#c25a48; --teal:#d98f5a; --plum:#e0a45c;
+  }
+  body.theme-grape{
+    --sage:#a487c9; --sage-deep:#7c5aa8; --gold:#b78fd6; --rust:#8a5cae;
+    --rose:#b98fd0; --rose-deep:#9163b3; --teal:#9a7ac2; --plum:#a487c9;
+  }
+  body.theme-forest{
+    --sage:#5f9e6f; --sage-deep:#3a7a4a; --gold:#7fae5a; --rust:#4a8a3f;
+    --rose:#6fae7a; --rose-deep:#4a8a5a; --teal:#4f9a6a; --plum:#5f9e6f;
+  }
+  .pomo-theme-row{display:flex;gap:6px;flex-wrap:wrap;}
+  .pomo-theme-swatch{
+    display:flex;align-items:center;gap:5px;padding:4px 8px;border-radius:10px;
+    border:1.5px solid var(--paper-line);background:var(--card);cursor:pointer;
+    font-family:'Be Vietnam Pro',sans-serif;font-size:10.5px;color:var(--ink);transition:transform .12s;
+  }
+  .pomo-theme-swatch:hover{transform:translateY(-1px);}
+  .pomo-theme-swatch.active{border-color:var(--sage-deep);box-shadow:0 0 0 1.5px var(--sage-deep) inset;font-weight:700;}
+  .pomo-theme-swatch.locked{opacity:.55;cursor:not-allowed;}
+  .swatch-dots{display:flex;gap:2px;}
+  .swatch-dots span{width:9px;height:9px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,.15);}
+  .pj-reflect-row{display:flex;gap:8px;align-items:center;}
+  .pj-reflect-row input{
+    flex:1;padding:8px 10px;border:1.5px solid var(--paper-line);border-radius:8px;
+    background:var(--card);color:var(--ink);font-family:'Be Vietnam Pro',sans-serif;font-size:12.5px;
+  }
+  .pj-reflect-row .btn{
+    font-family:'Be Vietnam Pro',sans-serif;font-size:11.5px;font-weight:700;padding:9px 16px;
+    border-radius:8px;border:1px solid var(--sage-deep);background:var(--sage);color:#fff;cursor:pointer;
+    transition:transform .15s,box-shadow .15s,background .15s;white-space:nowrap;
+  }
+  .pj-reflect-row .btn:hover{background:var(--sage-deep);transform:translateY(-1px);box-shadow:0 3px 8px rgba(46,42,36,.15);}
+  .pj-reflect-row .btn:active{transform:translateY(0);}
+  .pj-reflect-list{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
+  .pj-reflect-item{
+    background:var(--paper);border-left:3px solid var(--plum);border-radius:8px;padding:8px 12px;
+    font-family:'Be Vietnam Pro',sans-serif;font-size:12.5px;color:var(--ink);
+  }
+  .pj-reflect-item .pj-reflect-date{font-size:11px;color:var(--ink-soft);font-weight:700;margin-bottom:2px;}
   .pomo-journal-empty{font-family:'Be Vietnam Pro',sans-serif;font-size:12.5px;color:var(--ink-soft);padding:14px 4px;text-align:center;}
   .pj-entry{
     border-left:3px solid var(--sage-deep);background:var(--paper);border-radius:10px;padding:12px 14px;margin-bottom:10px;
@@ -1519,22 +1766,72 @@
   .pomo-zen-overlay{
     display:none;position:fixed;inset:0;z-index:500;background:var(--ink);color:var(--paper);
     flex-direction:column;align-items:center;justify-content:center;gap:14px;
-    font-family:'Be Vietnam Pro',sans-serif;
+    font-family:'Be Vietnam Pro',sans-serif;overflow:hidden;
   }
   .pomo-zen-overlay.open{display:flex;}
-  .pomo-zen-exit{
-    position:absolute;top:20px;right:20px;background:none;border:1.5px solid rgba(246,241,230,.35);color:var(--paper);
-    width:38px;height:38px;border-radius:50%;font-size:16px;cursor:pointer;
+  @keyframes zen-fade-in{from{opacity:0;}to{opacity:1;}}
+  .pomo-zen-overlay.open{animation:zen-fade-in .35s ease;}
+
+  /* subtle breathing radial glow behind everything, syncs pace with running state */
+  .pomo-zen-breath{
+    position:absolute;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--sage) 14%, transparent), transparent 60%);
+    opacity:.6;animation:zen-breathe 7s ease-in-out infinite;
   }
-  .pomo-zen-task{font-size:13px;letter-spacing:.5px;text-transform:uppercase;opacity:.75;text-align:center;padding:0 24px;}
+  .pomo-zen-overlay.on-break .pomo-zen-breath{
+    background:radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--gold) 16%, transparent), transparent 60%);
+  }
+  .pomo-zen-overlay:not(.running) .pomo-zen-breath{animation-play-state:paused;opacity:.35;}
+  @keyframes zen-breathe{
+    0%,100%{transform:scale(1);opacity:.4;}
+    50%{transform:scale(1.18);opacity:.75;}
+  }
+
+  .pomo-zen-topbar{
+    position:absolute;top:0;left:0;right:0;z-index:2;
+    display:flex;align-items:center;justify-content:space-between;padding:20px 20px 0;
+    transition:opacity .4s ease,transform .4s ease;
+  }
+  .pomo-zen-count{
+    font-size:11.5px;letter-spacing:.5px;text-transform:uppercase;opacity:.6;
+    border:1.5px solid rgba(246,241,230,.3);border-radius:20px;padding:5px 12px;
+  }
+  .pomo-zen-topbtns{display:flex;gap:10px;}
+  .pomo-zen-fs, .pomo-zen-exit{
+    background:none;border:1.5px solid rgba(246,241,230,.35);color:var(--paper);
+    width:38px;height:38px;border-radius:50%;font-size:15px;cursor:pointer;transition:transform .15s,opacity .15s;
+  }
+  .pomo-zen-fs:hover, .pomo-zen-exit:hover{transform:scale(1.08);opacity:.85;}
+  .pomo-zen-task{font-size:13px;letter-spacing:.5px;text-transform:uppercase;opacity:.75;text-align:center;padding:0 24px;z-index:1;}
+
+  .pomo-zen-ring-wrap{position:relative;width:min(64vw,380px);height:min(64vw,380px);z-index:1;display:flex;align-items:center;justify-content:center;}
+  .pomo-zen-ring-svg{width:100%;height:100%;transform:rotate(-90deg);position:absolute;inset:0;}
+  .pomo-zen-ring-track{fill:none;stroke:rgba(246,241,230,.12);stroke-width:3;}
+  .pomo-zen-ring-progress{
+    fill:none;stroke:var(--sage);stroke-width:3;stroke-linecap:round;
+    transition:stroke-dashoffset 1s linear,stroke .3s;
+  }
+  .pomo-zen-overlay.on-break .pomo-zen-ring-progress{stroke:var(--gold);}
+  .pomo-zen-ring-center{display:flex;flex-direction:column;align-items:center;gap:8px;}
+
   .pomo-zen-time{
-    font-family:'Fraunces',serif;font-weight:700;font-size:min(22vw,140px);line-height:1;font-variant-numeric:tabular-nums;
+    font-family:'Fraunces',serif;font-weight:700;font-size:min(15vw,110px);line-height:1;font-variant-numeric:tabular-nums;
   }
   .pomo-zen-label{font-size:13px;letter-spacing:1px;text-transform:uppercase;opacity:.7;}
-  .pomo-zen-controls{display:flex;align-items:center;gap:14px;margin-top:10px;}
+  .pomo-zen-controls{display:flex;align-items:center;gap:14px;margin-top:10px;z-index:1;transition:opacity .4s ease,transform .4s ease;}
   .pomo-zen-controls .pomo-ctrl-btn{background:transparent;border-color:rgba(246,241,230,.5);color:var(--paper);}
   .pomo-zen-controls .pomo-main-btn{background:var(--sage-deep);border-color:var(--sage-deep);color:#fff;}
   .pomo-zen-controls .pomo-main-btn.running{background:var(--rose-deep);border-color:var(--rose-deep);}
+  .pomo-zen-hint{
+    position:absolute;bottom:22px;font-size:11px;opacity:.4;letter-spacing:.3px;z-index:1;
+    transition:opacity .4s ease;
+  }
+
+  /* idle: fade away everything but the timer itself, for maximum focus */
+  .pomo-zen-overlay.idle .pomo-zen-topbar{opacity:0;transform:translateY(-6px);pointer-events:none;}
+  .pomo-zen-overlay.idle .pomo-zen-controls{opacity:0;transform:translateY(6px);pointer-events:none;}
+  .pomo-zen-overlay.idle .pomo-zen-hint{opacity:0;}
+  .pomo-zen-overlay.idle .pomo-zen-task{opacity:.35;}
 
   /* ===== Responsive ===== */
   @media(max-width:900px){
@@ -1618,6 +1915,8 @@
     .weeknav .label b{font-size:13px;}
     .stats-strip{gap:8px;}
     .stats-strip .pill{padding:4px 9px;font-size:11px;}
+    .project-progress-track{display:none;}
+    .project-head{gap:3px;}
 
     #authBtn{max-width:110px;font-size:11px;}
     .weeknav[style]{gap:5px;}
@@ -1641,10 +1940,14 @@
     .hs-bars{height:70px;}
     .hs-bar-col .hs-pct,.hs-bar-col .hs-wk{font-size:7px;}
 
-    .pomo-zen-exit{width:32px;height:32px;top:14px;right:14px;font-size:14px;}
+    .pomo-zen-topbar{padding:14px 14px 0;}
+    .pomo-zen-fs, .pomo-zen-exit{width:32px;height:32px;font-size:14px;}
+    .pomo-zen-count{font-size:10px;padding:4px 9px;}
+    .pomo-zen-ring-wrap{width:min(78vw,300px);height:min(78vw,300px);}
     .pomo-zen-controls{gap:10px;}
     .pomo-zen-controls .pomo-ctrl-btn{width:38px;height:38px;font-size:12px;}
     .pomo-zen-controls .pomo-main-btn{padding:0 16px;}
+    .pomo-zen-hint{display:none;}
   }
 
   @media(max-width:460px){
@@ -1822,7 +2125,75 @@
           <option value="">— Không gắn công việc —</option>
         </select>
       </div>
+      <div class="pomo-estimate-row" id="pomoEstimateRow" style="display:none;">
+        <label>⏱️ Ước lượng: <input type="number" id="pomoEstimateInput" min="1" max="50" placeholder="?"> phiên</label>
+        <span class="pomo-estimate-compare" id="pomoEstimateCompare"></span>
+      </div>
       <div class="pomo-today-stat" id="pomoTodayStat"></div>
+
+      <div class="pomo-motiv-panel" id="pomoMotivPanel">
+        <button type="button" class="pomo-motiv-toggle" id="pomoMotivToggle">
+          <span>✨ Động lực &amp; thử thách</span>
+          <span class="pomo-motiv-toggle-arrow" id="pomoMotivArrow">▾</span>
+        </button>
+        <div class="pomo-motiv-body" id="pomoMotivBody">
+          <div class="pomo-motiv-subtabs" id="pomoMotivSubtabs">
+            <button type="button" class="pomo-motiv-subtab active" data-sec="goal">🎯 Mục tiêu</button>
+            <button type="button" class="pomo-motiv-subtab" data-sec="garden">🌱 Vườn</button>
+            <button type="button" class="pomo-motiv-subtab" data-sec="reward">🎁 Thưởng</button>
+            <button type="button" class="pomo-motiv-subtab" data-sec="bet">🎯 Cược</button>
+            <button type="button" class="pomo-motiv-subtab" data-sec="theme">🎨 Giao diện</button>
+          </div>
+
+          <div class="pomo-motiv-sec" data-sec-content="goal">
+            <div class="pomo-motiv-row">
+              <span>🔥 Chuỗi ngày: <span class="pomo-streak" id="pomoStreakText">0 ngày</span></span>
+            </div>
+            <div class="pomo-motiv-row">
+              <div class="pomo-goal-row">
+                Mục tiêu tuần: <input type="number" id="pomoWeekGoalInput" min="0" max="200" value="0"> phiên
+                <div class="pomo-goal-bar"><div class="pomo-goal-bar-fill" id="pomoGoalBarFill" style="width:0%"></div></div>
+                <span id="pomoGoalText" style="font-weight:700;"></span>
+              </div>
+            </div>
+            <div class="pomo-badges-row" id="pomoBadgesRow"></div>
+          </div>
+
+          <div class="pomo-motiv-sec" data-sec-content="garden" style="display:none;">
+            <div class="pomo-garden-head">
+              <span>🌱 Vườn tập trung hôm nay</span>
+              <span class="pomo-garden-stage" id="pomoGardenStageText"></span>
+            </div>
+            <div class="pomo-garden-plant" id="pomoGardenPlant"></div>
+            <div class="pomo-garden-hint" id="pomoGardenHint"></div>
+          </div>
+
+          <div class="pomo-motiv-sec" data-sec-content="reward" style="display:none;">
+            <div class="pomo-reward-list" id="pomoRewardList"></div>
+            <div class="pomo-reward-add">
+              <input type="number" id="pomoRewardTarget" min="1" max="50" placeholder="Số phiên" style="width:70px;">
+              <input type="text" id="pomoRewardText" placeholder="Phần thưởng (VD: xem 1 tập phim)" maxlength="80">
+              <button class="btn btn-primary" id="pomoRewardAddBtn" style="white-space:nowrap;">Đặt</button>
+            </div>
+          </div>
+
+          <div class="pomo-motiv-sec" data-sec-content="bet" style="display:none;">
+            <div id="pomoBetStatus"></div>
+            <div class="pomo-bet-add" id="pomoBetAdd">
+              <select id="pomoBetTaskSelect"><option value="">— Chọn công việc quan trọng nhất hôm nay —</option></select>
+              <div class="pomo-bet-add-row">
+                <label>Xong trước <input type="time" id="pomoBetDeadline"></label>
+                <button class="btn btn-primary" id="pomoBetAddBtn">Đặt cược</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="pomo-motiv-sec" data-sec-content="theme" style="display:none;">
+            <div class="pomo-theme-row" id="pomoThemeRow"></div>
+          </div>
+        </div>
+      </div>
+
       <div class="pomo-ring-wrap">
         <svg viewBox="0 0 200 200" class="pomo-ring-svg">
           <circle cx="100" cy="100" r="90" class="pomo-ring-track"></circle>
@@ -1860,6 +2231,15 @@
     </div>
 
     <div class="pomo-journal-section">
+      <h3>🌙 Phản tư cuối ngày</h3>
+      <div class="pj-reflect-row">
+        <input type="text" id="pjReflectInput" maxlength="200" placeholder="Hôm nay bạn tự hào nhất về điều gì? Ngày mai muốn cải thiện gì?">
+        <button class="btn btn-primary" id="pjReflectSaveBtn" style="white-space:nowrap;">Lưu</button>
+      </div>
+      <div class="pj-reflect-list" id="pjReflectList"></div>
+    </div>
+
+    <div class="pomo-journal-section">
       <h3>📔 Nhật ký hiệu suất</h3>
       <div class="pj-toolbar">
         <select id="pjFilterMonth">
@@ -1867,21 +2247,38 @@
         </select>
         <div class="pj-summary" id="pjSummary"></div>
       </div>
+      <div class="pj-insight" id="pjInsight" style="display:none;"></div>
       <div class="pomo-journal-empty" id="pomoJournalEmpty">Chưa có phiên Pomodoro nào được ghi lại. Hoàn thành 1 phiên tập trung để bắt đầu nhật ký.</div>
       <div id="pomoJournalList"></div>
     </div>
   </div>
 
   <div class="pomo-zen-overlay" id="pomoZenOverlay">
-    <button class="pomo-zen-exit" id="pomoZenExit" title="Thoát Zen">✕</button>
+    <div class="pomo-zen-breath" id="pomoZenBreath"></div>
+    <div class="pomo-zen-topbar">
+      <div class="pomo-zen-count" id="pomoZenCount">Phiên 1 hôm nay</div>
+      <div class="pomo-zen-topbtns">
+        <button class="pomo-zen-fs" id="pomoZenFsBtn" title="Toàn màn hình">⛶</button>
+        <button class="pomo-zen-exit" id="pomoZenExit" title="Thoát Zen (Esc)">✕</button>
+      </div>
+    </div>
     <div class="pomo-zen-task" id="pomoZenTask">Không gắn công việc</div>
-    <div class="pomo-zen-time" id="pomoZenTime">25:00</div>
-    <div class="pomo-zen-label" id="pomoZenLabel">Phiên tập trung</div>
+    <div class="pomo-zen-ring-wrap">
+      <svg viewBox="0 0 200 200" class="pomo-zen-ring-svg">
+        <circle cx="100" cy="100" r="90" class="pomo-zen-ring-track"></circle>
+        <circle cx="100" cy="100" r="90" class="pomo-zen-ring-progress" id="pomoZenRingProgress"></circle>
+      </svg>
+      <div class="pomo-zen-ring-center">
+        <div class="pomo-zen-time" id="pomoZenTime">25:00</div>
+        <div class="pomo-zen-label" id="pomoZenLabel">Phiên tập trung</div>
+      </div>
+    </div>
     <div class="pomo-zen-controls">
       <button class="pomo-ctrl-btn" id="pomoZenResetBtn" title="Đặt lại">↺</button>
       <button class="pomo-ctrl-btn pomo-main-btn" id="pomoZenStartBtn">▶ Bắt đầu</button>
       <button class="pomo-ctrl-btn" id="pomoZenSkipBtn" title="Bỏ qua phiên này">⏭</button>
     </div>
+    <div class="pomo-zen-hint" id="pomoZenHint">Space: bắt đầu/tạm dừng · Esc: thoát</div>
   </div>
 
   <div class="modal-overlay" id="pomoJournalModal">
@@ -1904,6 +2301,15 @@
       <div class="field-label">Đã làm được gì?</div>
       <textarea id="pjAccomplished" placeholder="Ví dụ: hoàn thành phần mở đầu bài luận, ôn xong 2 chương Toán..." style="width:100%;min-height:52px;resize:vertical;font-family:'Be Vietnam Pro',sans-serif;font-size:12.5px;padding:8px 10px;border:1.5px solid var(--paper-line);border-radius:8px;background:var(--card);color:var(--ink);box-sizing:border-box;"></textarea>
       <div class="field-label">Gặp khó khăn/lỗi gì?</div>
+      <div class="pj-tag-row" id="pjTagRow">
+        <button type="button" class="pj-tag-chip" data-tag="📱 Điện thoại">📱 Điện thoại</button>
+        <button type="button" class="pj-tag-chip" data-tag="😴 Buồn ngủ">😴 Buồn ngủ</button>
+        <button type="button" class="pj-tag-chip" data-tag="🔊 Ồn/xao nhãng">🔊 Ồn/xao nhãng</button>
+        <button type="button" class="pj-tag-chip" data-tag="🤯 Quá khó">🤯 Quá khó</button>
+        <button type="button" class="pj-tag-chip" data-tag="😐 Chán/lười">😐 Chán/lười</button>
+        <button type="button" class="pj-tag-chip" data-tag="🍽️ Đói/mệt">🍽️ Đói/mệt</button>
+        <button type="button" class="pj-tag-chip" data-tag="💬 Bị làm phiền">💬 Bị làm phiền</button>
+      </div>
       <textarea id="pjIssues" placeholder="Ví dụ: mất tập trung vì điện thoại..." style="width:100%;min-height:44px;resize:vertical;font-family:'Be Vietnam Pro',sans-serif;font-size:12.5px;padding:8px 10px;border:1.5px solid var(--paper-line);border-radius:8px;background:var(--card);color:var(--ink);box-sizing:border-box;"></textarea>
       <div class="field-label">Khắc phục như thế nào?</div>
       <textarea id="pjFix" placeholder="Ví dụ: đã tắt thông báo điện thoại để tiếp tục tập trung..." style="width:100%;min-height:44px;resize:vertical;font-family:'Be Vietnam Pro',sans-serif;font-size:12.5px;padding:8px 10px;border:1.5px solid var(--paper-line);border-radius:8px;background:var(--card);color:var(--ink);box-sizing:border-box;margin-bottom:4px;"></textarea>
@@ -1954,6 +2360,11 @@
             <button class="proj-copy-btn" id="pasteWeekBtn" title="Dán kế hoạch vào tuần này" disabled>📥 Dán</button>
           </span>
         </h3>
+        <div class="proj-toolbar-row" id="projToolbarRow">
+          <button class="proj-tool-chip" id="projCompactToggle" title="Chế độ hiển thị gọn (nhiều dòng hơn trên màn hình)">▤ Gọn</button>
+          <button class="proj-tool-chip" id="projHideDoneToggle" title="Ẩn bớt việc đã xong">🙈 Ẩn đã xong</button>
+          <button class="proj-tool-chip" id="projDeadlineOnlyToggle" title="Chỉ hiện việc có deadline trong 3 ngày tới">⏰ Deadline gần</button>
+        </div>
         <div id="projectList"></div>
         <button class="add-habit" id="addProject">+ thêm dự án</button>
       </div>
@@ -2278,16 +2689,58 @@ let projects = [
 // mỗi task có subtasks, mỗi subtask gắn 1 "thứ" trong tuần (lặp lại hàng tuần) + ghi chú
 let ptasks = [];
 let editingTask = null, isNewTask = false, editorDay = 0;
+
+/* ---- Thu gọn/mở rộng từng dự án trong danh sách (chỉ là sở thích hiển thị, lưu riêng ở máy) ---- */
+const LS_COLLAPSED_PROJECTS = "paperPlanner_collapsedProjects";
+let collapsedProjects = new Set();
+try{
+  const rawCol = localStorage.getItem(LS_COLLAPSED_PROJECTS);
+  if(rawCol) collapsedProjects = new Set(JSON.parse(rawCol));
+}catch(e){ /* ignore */ }
+function toggleProjectCollapsed(projectId, cardEl){
+  if(collapsedProjects.has(projectId)) collapsedProjects.delete(projectId);
+  else collapsedProjects.add(projectId);
+  cardEl.classList.toggle('collapsed');
+  try{ localStorage.setItem(LS_COLLAPSED_PROJECTS, JSON.stringify([...collapsedProjects])); }catch(e){ /* ignore */ }
+}
+
+/* ---- Sở thích hiển thị danh sách dự án: gọn / ẩn đã xong / deadline gần / nhóm đã xong nào đang mở ---- */
+const LS_PROJ_PREFS = "paperPlanner_projPrefs";
+let projCompactMode = false, projHideDone = false, projDeadlineOnly = false;
+let expandedDoneGroups = new Set();
+try{
+  const rawPref = localStorage.getItem(LS_PROJ_PREFS);
+  if(rawPref){
+    const pr = JSON.parse(rawPref);
+    projCompactMode = !!pr.compact;
+    projHideDone = !!pr.hideDone;
+    projDeadlineOnly = !!pr.deadlineOnly;
+    if(Array.isArray(pr.expandedDoneGroups)) expandedDoneGroups = new Set(pr.expandedDoneGroups);
+  }
+}catch(e){ /* ignore */ }
+function saveProjPrefs(){
+  try{ localStorage.setItem(LS_PROJ_PREFS, JSON.stringify({
+    compact: projCompactMode, hideDone: projHideDone, deadlineOnly: projDeadlineOnly,
+    expandedDoneGroups: [...expandedDoneGroups]
+  })); }catch(e){ /* ignore */ }
+}
 let weekClipboard = null;
 let eisenOpen = false;
 let userQuote = '';
 let recurringTasks = []; // [{id, dayIdx, name, type, hour, time, endTime}]
 let pomodoroSessions = []; // [{id, date, month, taskId, taskTitle, durationMin, mode, rating, accomplished, issues, createdAt}]
 let pomoWorkMin = 25, pomoBreakMin = 5, pomoLongBreakMin = 15;
+let pomoWeekGoal = 0; // mục tiêu số phiên Pomodoro mỗi tuần
+let pomoEarnedBadges = []; // id các huy hiệu đã đạt được, để không hiện lại toast chúc mừng
+let dailyReflections = []; // [{id, date, text, createdAt}]
+let pomoTaskEstimates = {}; // {taskId: số phiên ước lượng}
+let pomoRewards = []; // [{id, date, target, text, claimed}] — tự thưởng có điều kiện, theo ngày
+let pomoBets = []; // [{id, date, taskId, taskTitle, deadline, resolved, won}] — cá cược với bản thân
+let pomoBetWinCount = 0; // tổng số lần thắng cược (để hiện huy hiệu)
 
 // ---- persistence ----
 function collectState(){
-  return {weekOffset, weeks, idCounter, habits, projects, ptasks, userQuote, recurringTasks, pomodoroSessions, pomoWorkMin, pomoBreakMin, pomoLongBreakMin};
+  return {weekOffset, weeks, idCounter, habits, projects, ptasks, userQuote, recurringTasks, pomodoroSessions, pomoWorkMin, pomoBreakMin, pomoLongBreakMin, pomoWeekGoal, pomoEarnedBadges, dailyReflections, pomoTaskEstimates, pomoRewards, pomoBets, pomoBetWinCount};
 }
 function saveState(){
   try{
@@ -2348,6 +2801,13 @@ function loadState(){
     if(typeof s.pomoWorkMin === 'number') pomoWorkMin = s.pomoWorkMin;
     if(typeof s.pomoBreakMin === 'number') pomoBreakMin = s.pomoBreakMin;
     if(typeof s.pomoLongBreakMin === 'number') pomoLongBreakMin = s.pomoLongBreakMin;
+    if(typeof s.pomoWeekGoal === 'number') pomoWeekGoal = s.pomoWeekGoal;
+    if(Array.isArray(s.pomoEarnedBadges)) pomoEarnedBadges = s.pomoEarnedBadges;
+    if(Array.isArray(s.dailyReflections)) dailyReflections = s.dailyReflections;
+    if(s.pomoTaskEstimates && typeof s.pomoTaskEstimates === 'object') pomoTaskEstimates = s.pomoTaskEstimates;
+    if(Array.isArray(s.pomoRewards)) pomoRewards = s.pomoRewards;
+    if(Array.isArray(s.pomoBets)) pomoBets = s.pomoBets;
+    if(typeof s.pomoBetWinCount === 'number') pomoBetWinCount = s.pomoBetWinCount;
     return true;
   }catch(e){ return false; }
 }
@@ -2463,6 +2923,13 @@ async function cloudPull(){
         if(typeof s.pomoWorkMin === 'number') pomoWorkMin = s.pomoWorkMin;
         if(typeof s.pomoBreakMin === 'number') pomoBreakMin = s.pomoBreakMin;
         if(typeof s.pomoLongBreakMin === 'number') pomoLongBreakMin = s.pomoLongBreakMin;
+        if(typeof s.pomoWeekGoal === 'number') pomoWeekGoal = s.pomoWeekGoal;
+        if(Array.isArray(s.pomoEarnedBadges)) pomoEarnedBadges = s.pomoEarnedBadges;
+        if(Array.isArray(s.dailyReflections)) dailyReflections = s.dailyReflections;
+        if(s.pomoTaskEstimates && typeof s.pomoTaskEstimates === 'object') pomoTaskEstimates = s.pomoTaskEstimates;
+        if(Array.isArray(s.pomoRewards)) pomoRewards = s.pomoRewards;
+        if(Array.isArray(s.pomoBets)) pomoBets = s.pomoBets;
+        if(typeof s.pomoBetWinCount === 'number') pomoBetWinCount = s.pomoBetWinCount;
         saveState();
         applyingRemoteState = false;
         render();
@@ -2931,6 +3398,13 @@ function calDeadlineChipHtml(t){
   const overdue = dd < today && !t.done;
   return `<span class="cal-deadline-chip${overdue?' overdue':''}">🚩 ${fmtDate(dd)}</span>`;
 }
+function isNearDeadline(dateStr){
+  if(!dateStr) return false;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const dd = new Date(dateStr+'T00:00:00');
+  const diffDays = Math.round((dd-today)/86400000);
+  return diffDays <= 3; // gồm cả quá hạn và trong 3 ngày tới, để không bỏ sót việc gấp
+}
 
 function calendarTasksForProject(pid){
   const out = [];
@@ -2960,12 +3434,25 @@ function calendarTasksWithNoProject(){
 function renderProjects(){
   const list = document.getElementById('projectList');
   list.innerHTML = "";
+  list.classList.toggle('compact', projCompactMode);
+
+  // ---- wire thanh công cụ (chỉ 1 lần logic, an toàn nếu gọi lại nhiều lần vì ta gán thẳng onclick) ----
+  const compactBtn = document.getElementById('projCompactToggle');
+  const hideDoneBtn = document.getElementById('projHideDoneToggle');
+  const deadlineBtn = document.getElementById('projDeadlineOnlyToggle');
+  compactBtn.classList.toggle('on', projCompactMode);
+  hideDoneBtn.classList.toggle('on', projHideDone);
+  deadlineBtn.classList.toggle('on', projDeadlineOnly);
+  compactBtn.onclick = ()=>{ projCompactMode = !projCompactMode; saveProjPrefs(); renderProjects(); };
+  hideDoneBtn.onclick = ()=>{ projHideDone = !projHideDone; saveProjPrefs(); renderProjects(); };
+  deadlineBtn.onclick = ()=>{ projDeadlineOnly = !projDeadlineOnly; saveProjPrefs(); renderProjects(); };
 
   function buildTaskRowsHtml(pts){
     return pts.map((t,i)=>{
       const prog = taskProgress(t);
       const state = prog.total>0 && prog.done===prog.total ? 'full' : (prog.done>0 ? 'partial' : '');
       return `<div class="task-row" data-tid="${t.id}">
+        <span class="drag-handle" title="kéo để sắp xếp">⋮⋮</span>
         <div class="t-check ${state}">${state==='full'?'✓':''}</div>
         <span class="t-num">${i+1}.</span>
         <span class="t-title ${state==='full'?'done':''}">${escapeHtmlP(t.title)}</span>
@@ -2996,6 +3483,8 @@ function renderProjects(){
       row.querySelector('.icon-mini').addEventListener('click', ()=>{ deleteProjectTask(tid); });
       const assignLink = row.querySelector('.assign-days-link');
       if(assignLink) assignLink.addEventListener('click', ()=> openTaskEditor(tid));
+      const globalIdx = ptasks.findIndex(x=>x.id===tid);
+      if(globalIdx > -1) wireDragReorder(row, ptasks, globalIdx, ()=>{ scheduleSave(); renderProjects(); });
     });
   }
   function wireCalRows(card, dts){
@@ -3019,6 +3508,42 @@ function renderProjects(){
     });
   }
 
+  // ---- xây phần thân 1 thẻ (todo-list + nhóm "đã xong" có thể gập), áp dụng bộ lọc hiện tại ----
+  function buildCardBodyHtml(cardKey, pts, dts){
+    let todoPts = pts.filter(t=>!taskDone(t));
+    let donePts = pts.filter(t=>taskDone(t));
+    let todoDts = dts.filter(t=>!t.done);
+    let doneDts = dts.filter(t=>t.done);
+    if(projDeadlineOnly){
+      todoPts = todoPts.filter(t=>isNearDeadline(t.deadlineDate));
+      todoDts = todoDts.filter(t=>isNearDeadline(t.deadline));
+    }
+    const doneCount = donePts.length + doneDts.length;
+    const todoHtml = (buildTaskRowsHtml(todoPts) + buildCalRowsHtml(todoDts, cardKey==='__loose__')) ||
+      `<div class="empty-hint">${projDeadlineOnly ? 'Không có việc nào sắp đến hạn.' : 'Chưa có công việc nào.'}</div>`;
+    let doneHtml = '';
+    if(doneCount && !projHideDone){
+      const isExpanded = expandedDoneGroups.has(cardKey);
+      doneHtml = `<div class="task-done-group${isExpanded?' expanded':''}" data-donegroup="${cardKey}">
+        <button class="task-done-toggle">▾ Đã xong (${doneCount})</button>
+        <div class="task-row-list done-list">
+          ${buildTaskRowsHtml(donePts) + buildCalRowsHtml(doneDts, cardKey==='__loose__')}
+        </div>
+      </div>`;
+    }
+    return `<div class="task-row-list">${todoHtml}</div>${doneHtml}`;
+  }
+  function wireDoneToggle(card, cardKey){
+    const grp = card.querySelector('.task-done-group');
+    if(!grp) return;
+    grp.querySelector('.task-done-toggle').addEventListener('click', ()=>{
+      grp.classList.toggle('expanded');
+      if(grp.classList.contains('expanded')) expandedDoneGroups.add(cardKey);
+      else expandedDoneGroups.delete(cardKey);
+      saveProjPrefs();
+    });
+  }
+
   if(!projects.length){
     list.innerHTML = `<div style="text-align:center;color:var(--ink-soft);font-size:12px;padding:14px 4px;margin-bottom:10px;">Chưa có dự án nào.</div>`;
   }
@@ -3031,10 +3556,13 @@ function renderProjects(){
     const pct = totalCt ? Math.round(doneCt/totalCt*100) : 0;
 
     const card = document.createElement('div');
-    card.className = "project-card";
+    card.className = "project-card" + (collapsedProjects.has(p.id) ? " collapsed" : "") + (p.pinned ? " pinned-card" : "");
     card.style.borderLeft = `4px solid ${p.color}`;
     card.innerHTML = `
       <div class="project-head" style="background:${p.color}17;">
+        <span class="project-drag-handle" title="kéo để sắp xếp dự án">⋮⋮</span>
+        <button class="project-collapse-btn" title="Thu gọn/Mở rộng">▾</button>
+        <button class="project-pin-btn${p.pinned?' pinned':''}" title="${p.pinned?'Bỏ ghim':'Ghim lên đầu'}">📌</button>
         <span class="project-dot" style="background:${p.color};"></span>
         <input class="project-name" value="${escapeHtmlP(p.name)}">
         <span class="project-count">${doneCt}/${totalCt}</span>
@@ -3043,16 +3571,28 @@ function renderProjects(){
         <button class="project-del" title="Xoá dự án">✕</button>
       </div>
       <div class="project-body">
-        <div class="task-row-list">
-          ${(buildTaskRowsHtml(pts) + buildCalRowsHtml(dts)) || '<div class="empty-hint">Chưa có công việc nào.</div>'}
-        </div>
+        ${buildCardBodyHtml(p.id, pts, dts)}
         <div class="quick-add-zone"><button class="add-task-btn">+ thêm công việc</button></div>
       </div>
     `;
     list.appendChild(card);
 
+    card.querySelector('.project-collapse-btn').addEventListener('click', e=>{
+      e.stopPropagation();
+      toggleProjectCollapsed(p.id, card);
+    });
+    card.querySelector('.project-pin-btn').addEventListener('click', e=>{
+      e.stopPropagation();
+      p.pinned = !p.pinned;
+      if(p.pinned){ const idx = projects.indexOf(p); projects.splice(idx,1); projects.unshift(p); }
+      scheduleSave();
+      renderProjects();
+    });
+    const globalPi = projects.indexOf(p);
+    wireDragReorder(card, projects, globalPi, ()=>{ scheduleSave(); renderProjects(); }, '.project-drag-handle');
+
     card.querySelector('.project-name').addEventListener('change', e=>{
-      projects[pi].name = e.target.value.trim() || projects[pi].name;
+      p.name = e.target.value.trim() || p.name;
       render();
     });
     card.querySelector('.project-del').addEventListener('click', async ()=>{
@@ -3060,17 +3600,18 @@ function renderProjects(){
       if(!ok) return;
       ptasks = ptasks.filter(t=>t.projectId!==p.id);
       dts.forEach(t=>{ t.projectId=''; delete t.project; });
-      projects.splice(pi,1);
+      projects.splice(projects.indexOf(p),1);
       renderProjects();
     });
     card.querySelector('.project-expand').addEventListener('click', ()=> openProjectModal(p.id));
     card.querySelector('.project-head').addEventListener('click', e=>{
-      if(e.target.closest('.project-name, .project-del, .project-expand')) return;
+      if(e.target.closest('.project-name, .project-del, .project-expand, .project-collapse-btn, .project-pin-btn, .project-drag-handle')) return;
       openProjectModal(p.id);
     });
 
     wireTaskRows(card);
     wireCalRows(card, dts);
+    wireDoneToggle(card, p.id);
     wireQuickAdd(card, p.id);
   });
 
@@ -3081,24 +3622,28 @@ function renderProjects(){
   const loosePct = (loosePts.length+looseDts.length) ? Math.round(looseDone/(loosePts.length+looseDts.length)*100) : 0;
 
   const looseCard = document.createElement('div');
-  looseCard.className = "project-card loose-card";
+  looseCard.className = "project-card loose-card" + (collapsedProjects.has('__loose__') ? " collapsed" : "");
   looseCard.innerHTML = `
     <div class="project-head">
+      <button class="project-collapse-btn" title="Thu gọn/Mở rộng">▾</button>
       <span class="project-dot" style="background:var(--ink-soft);"></span>
       <span style="flex:1;font-weight:800;font-size:12.5px;color:var(--ink);">📋 Task lẻ</span>
       <span class="project-count">${looseDone}/${loosePts.length+looseDts.length}</span>
       <div class="project-progress-track"><div class="project-progress-fill" style="width:${loosePct}%;background:var(--ink-soft)"></div></div>
     </div>
     <div class="project-body">
-      <div class="task-row-list">
-        ${(buildTaskRowsHtml(loosePts) + buildCalRowsHtml(looseDts, true)) || '<div class="empty-hint">Chưa có task lẻ nào.</div>'}
-      </div>
+      ${buildCardBodyHtml('__loose__', loosePts, looseDts)}
       <div class="quick-add-zone"><button class="add-task-btn">+ thêm task lẻ</button></div>
     </div>
   `;
   list.appendChild(looseCard);
+  looseCard.querySelector('.project-collapse-btn').addEventListener('click', e=>{
+    e.stopPropagation();
+    toggleProjectCollapsed('__loose__', looseCard);
+  });
   wireTaskRows(looseCard);
   wireCalRows(looseCard, looseDts);
+  wireDoneToggle(looseCard, '__loose__');
   wireQuickAdd(looseCard, null);
   scheduleSave();
 }
@@ -3428,8 +3973,8 @@ function openTaskEditor(taskId){
 function taskSubtasksByDay(t,d){ return (t.subtasks||[]).filter(s=>s.day===d); }
 
 /* ===== kéo-thả sắp xếp lại thứ tự việc trong ngày ===== */
-function wireDragReorder(block, list, index, refreshFn){
-  const handle = block.querySelector('.drag-handle');
+function wireDragReorder(block, list, index, refreshFn, handleSelector){
+  const handle = block.querySelector(handleSelector || '.drag-handle');
   if(!handle) return;
   handle.setAttribute('draggable','true');
   handle.addEventListener('dragstart', e=>{
@@ -3442,16 +3987,19 @@ function wireDragReorder(block, list, index, refreshFn){
   });
   block.addEventListener('dragover', e=>{
     e.preventDefault();
+    e.stopPropagation();
     const rect = block.getBoundingClientRect();
     const before = (e.clientY - rect.top) < rect.height/2;
     block.classList.toggle('drag-over-top', before);
     block.classList.toggle('drag-over-bottom', !before);
   });
-  block.addEventListener('dragleave', ()=>{
+  block.addEventListener('dragleave', (e)=>{
+    e.stopPropagation();
     block.classList.remove('drag-over-top','drag-over-bottom');
   });
   block.addEventListener('drop', e=>{
     e.preventDefault();
+    e.stopPropagation();
     block.classList.remove('drag-over-top','drag-over-bottom');
     const from = Number(e.dataTransfer.getData('text/plain'));
     if(isNaN(from) || from===index) return;
@@ -5656,6 +6204,26 @@ document.addEventListener('keydown', (e)=>{
   if(e.code === 'Space'){ e.preventDefault(); pomoToggleStart(); }
   else if(e.code === 'Escape'){ e.preventDefault(); pomoCloseZen(); }
 });
+
+/* ---- Phím tắt toàn cục: N = thêm việc nhanh cho ngày đang xem, / = mở tìm kiếm ---- */
+document.addEventListener('keydown', (e)=>{
+  if(e.metaKey || e.ctrlKey || e.altKey) return;
+  const tag = (e.target.tagName || '').toLowerCase();
+  const isTyping = tag==='input' || tag==='textarea' || tag==='select' || e.target.isContentEditable;
+  const anyModalOpen = document.querySelector('.modal-overlay.open');
+  if(isTyping || anyModalOpen || pomoZenOpen) return;
+
+  if(e.key === '/'){
+    e.preventDefault();
+    document.getElementById('searchToggle').click();
+  } else if(e.key === 'n' || e.key === 'N'){
+    const addBtn = document.getElementById('focusAddTask');
+    if(addBtn && document.getElementById('tabFocus').classList.contains('active')){
+      e.preventDefault();
+      addBtn.click();
+    }
+  }
+});
 const POMO_RING_CIRC = 2 * Math.PI * 90; // r=90
 
 function pomoTodayKey(){ return dateKey(new Date()); }
@@ -5674,7 +6242,444 @@ function pomoUpdateTodayStat(){
   let dots = '';
   for(let i=0;i<4;i++){ dots += `<span class="pts-dot${i < posInCycle ? ' filled' : ''}"></span>`; }
   el.innerHTML = `<span>Hôm nay: <b style="color:var(--ink)">${n}</b> phiên · ${totalMin} phút tập trung</span><span class="pts-dots">${dots}</span>`;
+  pomoUpdateMotivBar();
+  renderPomoGarden();
+  renderPomoRewards();
 }
+
+/* ---- 🌱 Vườn tập trung: cây lớn theo phiên hoàn thành, héo nếu bỏ dở ---- */
+const LS_POMO_ABANDON_PREFIX = "paperPlanner_pomoAbandon_";
+function pomoAbandonKey(){ return LS_POMO_ABANDON_PREFIX + pomoTodayKey(); }
+function pomoGetAbandonCount(){ return parseInt(localStorage.getItem(pomoAbandonKey())||'0', 10) || 0; }
+function pomoIncAbandonCount(){
+  const n = pomoGetAbandonCount() + 1;
+  localStorage.setItem(pomoAbandonKey(), String(n));
+  return n;
+}
+function pomoGardenAbandon(){
+  pomoIncAbandonCount();
+  showAppToast('🥀 Cây hơi héo vì phiên tập trung bị bỏ dở giữa chừng...');
+  const plantEl = document.getElementById('pomoGardenPlant');
+  if(plantEl){
+    plantEl.classList.remove('wilt-flash'); void plantEl.offsetWidth;
+    plantEl.classList.add('wilt-flash');
+    setTimeout(()=> plantEl.classList.remove('wilt-flash'), 900);
+  }
+  renderPomoGarden();
+}
+const POMO_GARDEN_MAX_STAGE = 6;
+function pomoGardenStage(){
+  const grown = pomoSessionsToday().length;
+  const wilted = pomoGetAbandonCount();
+  return Math.max(0, Math.min(POMO_GARDEN_MAX_STAGE, grown - wilted));
+}
+function pomoGardenSvg(stage, isWilted){
+  const stemH = stage>0 ? (14 + stage*13) : 0;
+  const leafCount = Math.min(stage, 4);
+  const bloom = stage >= 5;
+  const stemColor = isWilted ? '#a98f6a' : 'var(--sage-deep)';
+  const leafColor = isWilted ? '#b7a37c' : 'var(--sage)';
+  let leaves = '';
+  for(let i=0;i<leafCount;i++){
+    const y = 80 - (i+1)*(stemH/(leafCount+1));
+    const side = i%2===0 ? -1 : 1;
+    const droop = isWilted ? side*20 : side*35;
+    leaves += `<ellipse cx="${60+side*11}" cy="${y}" rx="10" ry="5" fill="${leafColor}" transform="rotate(${droop} ${60+side*11} ${y})"/>`;
+  }
+  let top = '';
+  if(bloom){
+    top = `<circle cx="60" cy="${80-stemH}" r="7" fill="var(--gold)"/><circle cx="60" cy="${80-stemH-9}" r="5" fill="var(--rose)"/>`;
+  } else if(stage>0){
+    top = `<circle cx="60" cy="${80-stemH}" r="4" fill="${leafColor}"/>`;
+  }
+  const stem = stage>0
+    ? `<rect x="57" y="${80-stemH}" width="6" height="${stemH}" rx="3" fill="${stemColor}"/>`
+    : `<circle cx="60" cy="78" r="4" fill="${stemColor}"/>`;
+  return `<svg viewBox="0 0 120 90" width="150" height="90">
+    <ellipse cx="60" cy="82" rx="34" ry="6" fill="var(--paper-line)"/>
+    ${stem}
+    ${leaves}
+    ${top}
+  </svg>`;
+}
+function renderPomoGarden(){
+  const plantEl = document.getElementById('pomoGardenPlant');
+  const stageText = document.getElementById('pomoGardenStageText');
+  const hint = document.getElementById('pomoGardenHint');
+  if(!plantEl || !stageText || !hint) return;
+  const stage = pomoGardenStage();
+  const abandon = pomoGetAbandonCount();
+  const labels = ['🌰 Hạt giống','🌱 Mầm non','🌿 Cây con','🍃 Cây nhỏ','🪴 Cây đang lớn','🌸 Chớm nở','🌺 Nở rộ'];
+  plantEl.innerHTML = pomoGardenSvg(stage, abandon>0);
+  stageText.textContent = labels[stage];
+  if(abandon>0){
+    hint.textContent = `Hôm nay có ${abandon} phiên bị bỏ dở khiến cây hơi héo. Hoàn thành trọn phiên để cây xanh tốt trở lại!`;
+  } else if(stage>=POMO_GARDEN_MAX_STAGE){
+    hint.textContent = 'Cây đã nở rộ hôm nay — tuyệt vời! 🎉';
+  } else {
+    hint.textContent = 'Hoàn thành 1 phiên tập trung trọn vẹn để cây lớn thêm 1 chút.';
+  }
+}
+
+/* ---- ⏱️ Ước lượng thời gian task trước khi bắt đầu ---- */
+function renderPomoEstimate(){
+  const row = document.getElementById('pomoEstimateRow');
+  const input = document.getElementById('pomoEstimateInput');
+  const compare = document.getElementById('pomoEstimateCompare');
+  if(!row || !input || !compare) return;
+  if(!pomoSelectedTaskId){
+    row.style.display = 'none';
+    return;
+  }
+  row.style.display = 'flex';
+  const est = pomoTaskEstimates[pomoSelectedTaskId];
+  if(document.activeElement !== input) input.value = est || '';
+  const actual = pomoSessionCountForTask(pomoSelectedTaskId);
+  compare.className = 'pomo-estimate-compare';
+  if(!est){
+    compare.textContent = actual ? `Đã làm ${actual} phiên` : '';
+  } else {
+    compare.textContent = `Thực tế: ${actual}/${est} phiên`;
+    if(actual > est) compare.classList.add('over');
+    else if(actual > 0 && actual === est) compare.classList.add('under');
+  }
+}
+document.getElementById('pomoEstimateInput').addEventListener('change', (e)=>{
+  if(!pomoSelectedTaskId) return;
+  const v = Math.max(1, Math.min(50, parseInt(e.target.value)||0));
+  if(v){ pomoTaskEstimates[pomoSelectedTaskId] = v; } else { delete pomoTaskEstimates[pomoSelectedTaskId]; }
+  e.target.value = v || '';
+  scheduleSave();
+  renderPomoEstimate();
+});
+
+/* ---- 🎁 Tự thưởng có điều kiện ---- */
+function pomoTodayRewards(){
+  const today = pomoTodayKey();
+  return pomoRewards.filter(r=>r.date===today);
+}
+function renderPomoRewards(){
+  const list = document.getElementById('pomoRewardList');
+  if(!list) return;
+  const todays = pomoTodayRewards();
+  const n = pomoSessionsToday().length;
+  if(!todays.length){
+    list.innerHTML = '<div style="color:var(--ink-soft);font-size:11.5px;">Chưa đặt phần thưởng nào cho hôm nay. Đặt điều kiện để tự tạo động lực!</div>';
+    return;
+  }
+  list.innerHTML = todays.map(r=>{
+    const done = n >= r.target;
+    if(done && !r.notified){
+      r.notified = true;
+      showAppToast(`🎁 Đã đạt ${r.target} phiên — mở khoá: ${r.text}!`);
+      scheduleSave();
+    }
+    return `<div class="pomo-reward-item${done ? ' done' : ''}">
+      <span class="rw-txt">${escapeHtmlP(r.text)}</span>
+      <span class="rw-progress">${n}/${r.target} phiên</span>
+      ${done && !r.claimed ? `<button class="rw-claim" data-claim="${r.id}">Đã nhận 🎉</button>` : ''}
+      <button class="rw-del" data-del="${r.id}" title="Xoá">✕</button>
+    </div>`;
+  }).join('');
+  list.querySelectorAll('[data-del]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      pomoRewards = pomoRewards.filter(r=>r.id !== btn.dataset.del);
+      scheduleSave();
+      renderPomoRewards();
+    });
+  });
+  list.querySelectorAll('[data-claim]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const r = pomoRewards.find(x=>x.id === btn.dataset.claim);
+      if(r){ r.claimed = true; scheduleSave(); showAppToast('✅ Chúc mừng, tận hưởng phần thưởng nhé!'); renderPomoRewards(); }
+    });
+  });
+}
+document.getElementById('pomoRewardAddBtn').addEventListener('click', ()=>{
+  const targetInput = document.getElementById('pomoRewardTarget');
+  const textInput = document.getElementById('pomoRewardText');
+  const target = Math.max(1, Math.min(50, parseInt(targetInput.value)||0));
+  const text = textInput.value.trim();
+  if(!target || !text){ showAppToast('Nhập số phiên và phần thưởng trước đã nhé.'); return; }
+  pomoRewards.push({id:'rw'+Math.random().toString(36).slice(2,10), date: pomoTodayKey(), target, text, claimed:false, notified:false});
+  targetInput.value = ''; textInput.value = '';
+  scheduleSave();
+  renderPomoRewards();
+  showAppToast('🎁 Đã đặt phần thưởng cho hôm nay!');
+});
+
+/* ---- 🎯 Task "cá cược với bản thân" ---- */
+function pomoFindTaskGlobal(taskId){
+  for(const wk of weeks){
+    if(!wk || !wk.days) continue;
+    for(const day of wk.days){
+      const t = day.tasks.find(x=>x.id===taskId);
+      if(t) return t;
+    }
+  }
+  return null;
+}
+function pomoTodayBet(){
+  const today = pomoTodayKey();
+  return pomoBets.find(b=>b.date===today) || null;
+}
+function renderPomoBet(){
+  const statusEl = document.getElementById('pomoBetStatus');
+  const addEl = document.getElementById('pomoBetAdd');
+  const sel = document.getElementById('pomoBetTaskSelect');
+  if(!statusEl || !addEl || !sel) return;
+
+  const tasks = pomoGatherTasks();
+  sel.innerHTML = '<option value="">— Chọn công việc quan trọng nhất hôm nay —</option>' +
+    tasks.map(t=>`<option value="${escapeHtmlP(t.id)}">${escapeHtmlP(t.ctx)} · ${escapeHtmlP(t.title)}</option>`).join('');
+
+  const bet = pomoTodayBet();
+  if(!bet){
+    addEl.style.display = 'flex';
+    statusEl.innerHTML = '';
+    return;
+  }
+  addEl.style.display = 'none';
+
+  if(!bet.resolved){
+    const task = pomoFindTaskGlobal(bet.taskId);
+    const now = new Date();
+    const deadlineDt = new Date(`${bet.date}T${bet.deadline || '23:59'}:00`);
+    const isDone = task ? !!task.done : false;
+    if(isDone && now <= deadlineDt){
+      bet.resolved = true; bet.won = true;
+      pomoBetWinCount++;
+      scheduleSave();
+      if(soundEnabled) playCelebrationSound();
+      showAppToast(`🏅 Bạn đã thắng cược! "${bet.taskTitle}" xong trước ${bet.deadline}.`);
+    } else if(now > deadlineDt){
+      bet.resolved = true; bet.won = isDone; // xong nhưng quá giờ vẫn coi là thua cược tốc độ
+      scheduleSave();
+      if(!bet.won) showAppToast(`⏰ Đã quá giờ hẹn cho "${bet.taskTitle}" — thua cược lần này, mai gỡ nhé!`);
+    }
+  }
+
+  if(!bet.resolved){
+    statusEl.innerHTML = `<div class="pomo-bet-status-box">
+      🎯 Đang cược: hoàn thành "<b>${escapeHtmlP(bet.taskTitle)}</b>" trước <b>${bet.deadline}</b>.
+      <div><button class="bet-cancel" id="pomoBetCancelBtn">Huỷ cược</button></div>
+    </div>`;
+    const cancelBtn = document.getElementById('pomoBetCancelBtn');
+    if(cancelBtn) cancelBtn.addEventListener('click', ()=>{
+      pomoBets = pomoBets.filter(b=>b.id !== bet.id);
+      scheduleSave();
+      renderPomoBet();
+    });
+  } else if(bet.won){
+    statusEl.innerHTML = `<div class="pomo-bet-status-box won">🏅 Đã thắng cược "${escapeHtmlP(bet.taskTitle)}"! Tổng số lần thắng: <b>${pomoBetWinCount}</b>.</div>`;
+  } else {
+    statusEl.innerHTML = `<div class="pomo-bet-status-box lost">😅 Lần này chưa thắng cược "${escapeHtmlP(bet.taskTitle)}". Thử lại vào ngày mai nhé!</div>`;
+  }
+}
+document.getElementById('pomoBetAddBtn').addEventListener('click', ()=>{
+  const sel = document.getElementById('pomoBetTaskSelect');
+  const deadlineInput = document.getElementById('pomoBetDeadline');
+  const taskId = sel.value;
+  const deadline = deadlineInput.value;
+  if(!taskId || !deadline){ showAppToast('Chọn công việc và giờ hẹn trước đã nhé.'); return; }
+  const taskTitle = sel.options[sel.selectedIndex].text;
+  pomoBets.push({id:'bet'+Math.random().toString(36).slice(2,10), date: pomoTodayKey(), taskId, taskTitle, deadline, resolved:false, won:false});
+  scheduleSave();
+  renderPomoBet();
+  showAppToast('🎯 Đã đặt cược với chính mình — cố lên!');
+});
+setInterval(()=>{
+  const wrap = document.getElementById('pomodoroWrap');
+  if(wrap && wrap.style.display !== 'none') renderPomoBet();
+}, 30000);
+
+
+function pomoCurrentStreak(){
+  const daySet = new Set(pomodoroSessions.map(s=>s.date));
+  if(!daySet.size) return 0;
+  let streak = 0;
+  let cur = new Date(); cur.setHours(0,0,0,0);
+  // nếu hôm nay chưa có phiên nào, vẫn tính từ hôm qua (chưa mất chuỗi cho tới hết ngày hôm nay)
+  if(!daySet.has(dateKey(cur))) cur.setDate(cur.getDate()-1);
+  while(daySet.has(dateKey(cur))){
+    streak++;
+    cur.setDate(cur.getDate()-1);
+  }
+  return streak;
+}
+
+/* ---- Mục tiêu số phiên Pomodoro mỗi tuần ---- */
+function pomoSessionsThisCalendarWeek(offsetWeeks){
+  offsetWeeks = offsetWeeks || 0;
+  const now = new Date();
+  const dow = (now.getDay()+6)%7; // 0=Thứ2
+  const monday = new Date(now); monday.setHours(0,0,0,0); monday.setDate(now.getDate()-dow+ (offsetWeeks*7));
+  const sunday = new Date(monday); sunday.setDate(monday.getDate()+6);
+  const mondayKey = dateKey(monday), sundayKey = dateKey(sunday);
+  return pomodoroSessions.filter(s=> s.date >= mondayKey && s.date <= sundayKey);
+}
+
+const POMO_BADGES = [
+  {id:'sessions_10', label:'🥉 10 phiên đầu tiên', check:(t)=>t.totalSessions>=10},
+  {id:'sessions_50', label:'🥈 50 phiên', check:(t)=>t.totalSessions>=50},
+  {id:'sessions_100', label:'🥇 100 phiên', check:(t)=>t.totalSessions>=100},
+  {id:'hours_10', label:'⏱️ 10 giờ tập trung', check:(t)=>t.totalMin>=600},
+  {id:'hours_50', label:'⏱️ 50 giờ tập trung', check:(t)=>t.totalMin>=3000},
+  {id:'streak_3', label:'🔥 Chuỗi 3 ngày', check:(t)=>t.streak>=3},
+  {id:'streak_7', label:'🔥 Chuỗi 7 ngày', check:(t)=>t.streak>=7},
+  {id:'streak_30', label:'🔥 Chuỗi 30 ngày', check:(t)=>t.streak>=30},
+];
+function pomoCheckBadges(){
+  const totals = {
+    totalSessions: pomodoroSessions.length,
+    totalMin: pomodoroSessions.reduce((a,s)=>a+(s.durationMin||0),0),
+    streak: pomoCurrentStreak()
+  };
+  const newlyEarned = [];
+  POMO_BADGES.forEach(b=>{
+    if(!pomoEarnedBadges.includes(b.id) && b.check(totals)){
+      pomoEarnedBadges.push(b.id);
+      newlyEarned.push(b);
+    }
+  });
+  if(newlyEarned.length){
+    scheduleSave();
+    newlyEarned.forEach(b=>{
+      showAppToast(`🎉 Huy hiệu mới: ${b.label}!`);
+      const unlockedTheme = ACCENT_THEMES.find(t=>t.requireBadge===b.id);
+      if(unlockedTheme) showAppToast(`🎨 Mở khoá giao diện mới: ${unlockedTheme.label}!`);
+    });
+  }
+  return totals;
+}
+function pomoRenderBadges(){
+  const row = document.getElementById('pomoBadgesRow');
+  if(!row) return;
+  if(!pomoEarnedBadges.length){ row.innerHTML = '<span style="font-size:11px;color:var(--ink-soft);">Chưa có huy hiệu nào — hoàn thành phiên đầu tiên để bắt đầu!</span>'; return; }
+  row.innerHTML = POMO_BADGES.filter(b=>pomoEarnedBadges.includes(b.id))
+    .map(b=>`<span class="pomo-badge-chip">${b.label}</span>`).join('');
+  renderAccentThemePicker();
+}
+
+/* ---- 🎨 Đổi giao diện/theme khi đạt mốc huy hiệu ---- */
+const LS_ACCENT_THEME = "paperPlanner_accentTheme";
+const ACCENT_THEMES = [
+  {id:'default', label:'📜 Giấy (mặc định)', cls:'', requireBadge:null, swatch:['#8fa27f','#c97f77','#d3a94c']},
+  {id:'ocean',   label:'🌊 Biển',            cls:'theme-ocean',  requireBadge:'sessions_10', swatch:['#6fa3b8','#3f7f96','#5aa6a1']},
+  {id:'sunset',  label:'🌅 Hoàng hôn',       cls:'theme-sunset', requireBadge:'streak_7',    swatch:['#e0a45c','#c97a3d','#e8b64a']},
+  {id:'grape',   label:'🍇 Nho',             cls:'theme-grape',  requireBadge:'sessions_50', swatch:['#a487c9','#7c5aa8','#b78fd6']},
+  {id:'forest',  label:'🌲 Rừng',            cls:'theme-forest', requireBadge:'hours_50',    swatch:['#5f9e6f','#3a7a4a','#7fae5a']},
+];
+function pomoThemeUnlocked(theme){
+  return !theme.requireBadge || pomoEarnedBadges.includes(theme.requireBadge);
+}
+function applyAccentTheme(){
+  const saved = localStorage.getItem(LS_ACCENT_THEME) || 'default';
+  let theme = ACCENT_THEMES.find(t=>t.id===saved) || ACCENT_THEMES[0];
+  if(!pomoThemeUnlocked(theme)) theme = ACCENT_THEMES[0]; // an toàn nếu chưa đủ điều kiện
+  ACCENT_THEMES.forEach(t=>{ if(t.cls) document.body.classList.remove(t.cls); });
+  if(theme.cls) document.body.classList.add(theme.cls);
+  return theme.id;
+}
+function renderAccentThemePicker(){
+  const row = document.getElementById('pomoThemeRow');
+  if(!row) return;
+  const current = localStorage.getItem(LS_ACCENT_THEME) || 'default';
+  row.innerHTML = ACCENT_THEMES.map(t=>{
+    const unlocked = pomoThemeUnlocked(t);
+    const badgeInfo = t.requireBadge ? POMO_BADGES.find(b=>b.id===t.requireBadge) : null;
+    const title = unlocked ? t.label : `Mở khoá bằng huy hiệu: ${badgeInfo ? badgeInfo.label : ''}`;
+    return `<button type="button" class="pomo-theme-swatch${current===t.id?' active':''}${unlocked?'':' locked'}" data-theme="${t.id}" title="${escapeHtmlP(title)}">
+      <span class="swatch-dots">${t.swatch.map(c=>`<span style="background:${c}"></span>`).join('')}</span>
+      <span class="swatch-label">${unlocked ? t.label : '🔒 ' + t.label}</span>
+    </button>`;
+  }).join('');
+  row.querySelectorAll('.pomo-theme-swatch').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = btn.dataset.theme;
+      const theme = ACCENT_THEMES.find(t=>t.id===id);
+      if(!theme || !pomoThemeUnlocked(theme)){ showAppToast('🔒 Chưa mở khoá — hoàn thành huy hiệu tương ứng để dùng giao diện này nhé!'); return; }
+      localStorage.setItem(LS_ACCENT_THEME, id);
+      applyAccentTheme();
+      renderAccentThemePicker();
+      showAppToast(`🎨 Đã đổi giao diện: ${theme.label}`);
+    });
+  });
+}
+applyAccentTheme();
+
+function pomoUpdateMotivBar(){
+  const totals = pomoCheckBadges();
+  const streakEl = document.getElementById('pomoStreakText');
+  if(streakEl) streakEl.textContent = totals.streak > 0 ? `${totals.streak} ngày` : '0 ngày (bắt đầu ngay!)';
+
+  const goalInput = document.getElementById('pomoWeekGoalInput');
+  if(goalInput && document.activeElement !== goalInput) goalInput.value = pomoWeekGoal;
+  const thisWeekCount = pomoSessionsThisCalendarWeek(0).length;
+  const fill = document.getElementById('pomoGoalBarFill');
+  const goalText = document.getElementById('pomoGoalText');
+  if(fill && goalText){
+    if(pomoWeekGoal > 0){
+      const pct = Math.min(100, Math.round((thisWeekCount/pomoWeekGoal)*100));
+      fill.style.width = pct + '%';
+      goalText.textContent = `${thisWeekCount}/${pomoWeekGoal}${pct>=100 ? ' 🎉' : ''}`;
+    } else {
+      fill.style.width = '0%';
+      goalText.textContent = `${thisWeekCount} phiên`;
+    }
+  }
+  pomoRenderBadges();
+}
+document.getElementById('pomoWeekGoalInput').addEventListener('change', (e)=>{
+  pomoWeekGoal = Math.max(0, Math.min(200, parseInt(e.target.value)||0));
+  e.target.value = pomoWeekGoal;
+  scheduleSave();
+  pomoUpdateMotivBar();
+});
+
+/* ---- Cảnh báo nhẹ khi rời tab lúc đang chạy phiên tập trung ---- */
+let pomoHiddenAt = null;
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden){
+    if(pomoRunning && pomoMode==='work') pomoHiddenAt = Date.now();
+  } else {
+    if(pomoHiddenAt){
+      const awaySec = Math.round((Date.now()-pomoHiddenAt)/1000);
+      pomoHiddenAt = null;
+      if(pomoRunning && pomoMode==='work' && awaySec >= 15){
+        showAppToast(`👀 Bạn vừa rời tab ${awaySec}s. Quay lại tập trung nào!`);
+      }
+    }
+  }
+});
+
+/* ---- Phản tư cuối ngày ---- */
+function pomoTodayReflection(){
+  const today = pomoTodayKey();
+  return dailyReflections.find(r=>r.date===today) || null;
+}
+function renderPjReflect(){
+  const input = document.getElementById('pjReflectInput');
+  const list = document.getElementById('pjReflectList');
+  if(!input || !list) return;
+  const today = pomoTodayReflection();
+  input.value = today ? today.text : '';
+  const past = dailyReflections.filter(r=>r.date!==pomoTodayKey())
+    .sort((a,b)=> b.date.localeCompare(a.date)).slice(0,5);
+  list.innerHTML = past.map(r=>`<div class="pj-reflect-item"><div class="pj-reflect-date">${pomoFmtDateVN(r.date)}</div>${escapeHtmlP(r.text)}</div>`).join('');
+}
+document.getElementById('pjReflectSaveBtn').addEventListener('click', ()=>{
+  const input = document.getElementById('pjReflectInput');
+  const text = input.value.trim();
+  if(!text){ showAppToast('Hãy viết vài dòng trước khi lưu nhé.'); return; }
+  const today = pomoTodayKey();
+  const existing = dailyReflections.find(r=>r.date===today);
+  if(existing){ existing.text = text; existing.createdAt = Date.now(); }
+  else { dailyReflections.unshift({id:'rf'+Math.random().toString(36).slice(2,10), date:today, text, createdAt:Date.now()}); }
+  scheduleSave();
+  renderPjReflect();
+  showAppToast('✅ Đã lưu phản tư hôm nay!');
+});
 
 function pomoGatherTasks(){
   // Lấy toàn bộ task của tuần đang xem (theo ngày) để người dùng gắn vào phiên Pomodoro
@@ -5695,6 +6700,36 @@ function pomoFmtTime(totalSec){
   return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
 }
 
+/* ---- Panel gộp "Động lực & thử thách": thu gọn/mở rộng + chuyển subtab ---- */
+const LS_POMO_MOTIV_OPEN = "paperPlanner_pomoMotivOpen";
+function pomoMotivIsOpen(){ return localStorage.getItem(LS_POMO_MOTIV_OPEN) === '1'; }
+function applyPomoMotivOpenState(){
+  const body = document.getElementById('pomoMotivBody');
+  const arrow = document.getElementById('pomoMotivArrow');
+  if(!body || !arrow) return;
+  const open = pomoMotivIsOpen();
+  body.style.display = open ? 'block' : 'none';
+  arrow.textContent = open ? '▴' : '▾';
+}
+const pomoMotivToggleBtn = document.getElementById('pomoMotivToggle');
+if(pomoMotivToggleBtn){
+  pomoMotivToggleBtn.addEventListener('click', ()=>{
+    localStorage.setItem(LS_POMO_MOTIV_OPEN, pomoMotivIsOpen() ? '0' : '1');
+    applyPomoMotivOpenState();
+  });
+}
+applyPomoMotivOpenState();
+document.querySelectorAll('.pomo-motiv-subtab').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.pomo-motiv-subtab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const sec = btn.dataset.sec;
+    document.querySelectorAll('.pomo-motiv-sec').forEach(s=>{
+      s.style.display = (s.dataset.secContent === sec) ? 'block' : 'none';
+    });
+  });
+});
+
 function renderPomodoro(){
   // task select
   const sel = document.getElementById('pomoTaskSelect');
@@ -5712,11 +6747,15 @@ function renderPomodoro(){
   pomoUpdateTodayStat();
   pomoUpdateDisplay();
   renderPomoJournal();
+  renderPomoGarden();
+  renderPomoEstimate();
+  renderPomoBet();
 }
 
 document.getElementById('pomoTaskSelect').addEventListener('change', (e)=>{
   pomoSelectedTaskId = e.target.value;
   pomoUpdateZenTaskLabel();
+  renderPomoEstimate();
 });
 document.getElementById('pomoWorkMin').addEventListener('change', (e)=>{
   pomoWorkMin = Math.max(1, Math.min(120, parseInt(e.target.value)||25));
@@ -5773,6 +6812,17 @@ function pomoUpdateDisplay(){
   ring.style.strokeDashoffset = POMO_RING_CIRC * (1-pct);
   ring.classList.toggle('on-break', pomoMode==='break');
 
+  const zenRing = document.getElementById('pomoZenRingProgress');
+  if(zenRing){
+    zenRing.style.strokeDasharray = POMO_RING_CIRC;
+    zenRing.style.strokeDashoffset = POMO_RING_CIRC * (1-pct);
+  }
+  const zenOverlay = document.getElementById('pomoZenOverlay');
+  if(zenOverlay){
+    zenOverlay.classList.toggle('on-break', pomoMode==='break');
+    zenOverlay.classList.toggle('running', pomoRunning);
+  }
+
   [document.getElementById('pomoStartBtn'), document.getElementById('pomoZenStartBtn')].forEach(btn=>{
     btn.textContent = pomoRunning ? '⏸ Tạm dừng' : '▶ Bắt đầu';
     btn.classList.toggle('running', pomoRunning);
@@ -5799,21 +6849,29 @@ function pomoStart(){
   pomoInterval = setInterval(pomoTick, 1000);
   pomoUpdateDisplay();
   pomoPlayBgAudio();
+  if(pomoZenOpen) pomoZenResetIdle();
 }
 function pomoPause(){
   pomoRunning = false;
   if(pomoInterval){ clearInterval(pomoInterval); pomoInterval = null; }
   pomoUpdateDisplay();
   pomoStopBgAudio();
+  if(pomoZenOpen) pomoZenResetIdle();
 }
 function pomoToggleStart(){ pomoRunning ? pomoPause() : pomoStart(); }
 function pomoReset(){
+  if(pomoMode==='work' && pomoRemaining > 0 && pomoRemaining < pomoWorkMin*60){
+    pomoGardenAbandon();
+  }
   pomoPause();
   const breakMins = pomoIsLongBreak ? pomoLongBreakMin : pomoBreakMin;
   pomoRemaining = (pomoMode==='work' ? pomoWorkMin : breakMins) * 60;
   pomoUpdateDisplay();
 }
 function pomoSkip(){
+  if(pomoMode==='work' && pomoRemaining > 0 && pomoRemaining < pomoWorkMin*60){
+    pomoGardenAbandon();
+  }
   pomoPause();
   pomoOnSessionComplete(true);
 }
@@ -5842,21 +6900,90 @@ function pomoOnSessionComplete(skipped){
 }
 
 // ---- Zen mode ----
+let pomoZenIdleTimer = null;
+const POMO_ZEN_IDLE_MS = 3200;
+
+function pomoZenUpdateCount(){
+  const el = document.getElementById('pomoZenCount');
+  if(!el) return;
+  const todayKey = dateKey(new Date());
+  const n = pomodoroSessions.filter(s=>s.date===todayKey).length + 1;
+  el.textContent = `Phiên ${n} hôm nay`;
+}
+
+function pomoZenResetIdle(){
+  const overlay = document.getElementById('pomoZenOverlay');
+  overlay.classList.remove('idle');
+  if(pomoZenIdleTimer) clearTimeout(pomoZenIdleTimer);
+  if(pomoRunning){
+    pomoZenIdleTimer = setTimeout(()=>{ overlay.classList.add('idle'); }, POMO_ZEN_IDLE_MS);
+  }
+}
+
 function pomoOpenZen(){
   pomoZenOpen = true;
-  document.getElementById('pomoZenOverlay').classList.add('open');
+  const overlay = document.getElementById('pomoZenOverlay');
+  overlay.classList.add('open');
+  overlay.classList.remove('idle');
+  pomoZenUpdateCount();
   pomoUpdateDisplay();
+  pomoZenResetIdle();
+  // toàn màn hình thật sự để loại bỏ mọi phân tâm — bỏ qua lỗi nếu trình duyệt/thiết bị không hỗ trợ
+  if(document.documentElement.requestFullscreen){
+    document.documentElement.requestFullscreen().catch(()=>{});
+  }
 }
-function pomoCloseZen(){
+function pomoCloseZen(force){
+  if(!force && pomoRunning){
+    const ok = confirm('Phiên tập trung đang chạy. Thoát Zen mode?');
+    if(!ok) return;
+  }
   pomoZenOpen = false;
-  document.getElementById('pomoZenOverlay').classList.remove('open');
+  const overlay = document.getElementById('pomoZenOverlay');
+  overlay.classList.remove('open');
+  overlay.classList.remove('idle');
+  if(pomoZenIdleTimer){ clearTimeout(pomoZenIdleTimer); pomoZenIdleTimer = null; }
+  if(document.fullscreenElement && document.exitFullscreen){
+    document.exitFullscreen().catch(()=>{});
+  }
 }
 document.getElementById('pomoZenBtn').addEventListener('click', pomoOpenZen);
-document.getElementById('pomoZenExit').addEventListener('click', pomoCloseZen);
+document.getElementById('pomoZenExit').addEventListener('click', ()=> pomoCloseZen());
+document.getElementById('pomoZenFsBtn').addEventListener('click', ()=>{
+  if(document.fullscreenElement){
+    document.exitFullscreen().catch(()=>{});
+  } else if(document.documentElement.requestFullscreen){
+    document.documentElement.requestFullscreen().catch(()=>{});
+  }
+});
+['mousemove','touchstart','keydown'].forEach(evt=>{
+  document.getElementById('pomoZenOverlay').addEventListener(evt, pomoZenResetIdle);
+});
+// nếu người dùng thoát fullscreen bằng phím tắt trình duyệt, cũng đóng luôn overlay theo cho nhất quán
+document.addEventListener('fullscreenchange', ()=>{
+  if(!document.fullscreenElement && pomoZenOpen){
+    // giữ Zen mode mở nhưng không ép fullscreen lại — người dùng có thể bấm ⛶ để bật lại
+  }
+});
 
 // ---- Nhật ký hiệu suất sau mỗi phiên ----
 let pjRatingValue = 0;
 let pjEditingId = null; // null = đang tạo phiên mới; ngược lại là id entry đang sửa
+let pjSelectedTags = []; // các tag lý do mất tập trung đang được chọn trong modal
+
+function pjRenderTagRow(){
+  document.querySelectorAll('#pjTagRow .pj-tag-chip').forEach(chip=>{
+    chip.classList.toggle('on', pjSelectedTags.includes(chip.dataset.tag));
+  });
+}
+document.querySelectorAll('#pjTagRow .pj-tag-chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    const tag = chip.dataset.tag;
+    if(pjSelectedTags.includes(tag)) pjSelectedTags = pjSelectedTags.filter(t=>t!==tag);
+    else pjSelectedTags.push(tag);
+    pjRenderTagRow();
+  });
+});
 
 function pomoFmtDateVN(dateStr){
   // dateStr dạng YYYY-MM-DD (từ dateKey) -> "Thứ 2, 20/07/2026"
@@ -5885,6 +7012,7 @@ function openPomoJournalModal(editEntry){
     document.getElementById('pjAccomplished').value = editEntry.accomplished || '';
     document.getElementById('pjIssues').value = editEntry.issues || '';
     document.getElementById('pjFix').value = editEntry.fix || '';
+    pjSelectedTags = Array.isArray(editEntry.tags) ? [...editEntry.tags] : [];
     doneRow.style.display = 'none'; // sửa nhật ký cũ thì không đổi trạng thái công việc nữa
   } else {
     document.querySelector('.modal-eyebrow').textContent = 'HOÀN THÀNH PHIÊN POMODORO 🍅';
@@ -5892,6 +7020,7 @@ function openPomoJournalModal(editEntry){
     document.getElementById('pjAccomplished').value = '';
     document.getElementById('pjIssues').value = '';
     document.getElementById('pjFix').value = '';
+    pjSelectedTags = [];
     if(pomoSelectedTaskId && currentTaskTitle){
       doneRow.style.display = 'flex';
       doneCheck.checked = false;
@@ -5903,6 +7032,7 @@ function openPomoJournalModal(editEntry){
   document.querySelectorAll('#pjRating button').forEach(b=>{
     b.classList.toggle('on', parseInt(b.dataset.v) <= pjRatingValue);
   });
+  pjRenderTagRow();
   document.getElementById('pomoJournalModal').classList.add('open');
 }
 
@@ -5938,6 +7068,7 @@ document.getElementById('pjSaveBtn').addEventListener('click', ()=>{
       entry.accomplished = document.getElementById('pjAccomplished').value.trim();
       entry.issues = document.getElementById('pjIssues').value.trim();
       entry.fix = document.getElementById('pjFix').value.trim();
+      entry.tags = [...pjSelectedTags];
       scheduleSave();
       renderPomoJournal();
       showAppToast('✅ Đã cập nhật nhật ký hiệu suất!');
@@ -5963,6 +7094,7 @@ document.getElementById('pjSaveBtn').addEventListener('click', ()=>{
     accomplished: document.getElementById('pjAccomplished').value.trim(),
     issues: document.getElementById('pjIssues').value.trim(),
     fix: document.getElementById('pjFix').value.trim(),
+    tags: [...pjSelectedTags],
     taskMarkedDone: !!markDone,
     createdAt: Date.now()
   };
@@ -5978,6 +7110,8 @@ document.getElementById('pjSaveBtn').addEventListener('click', ()=>{
 
   renderPomoJournal();
   pomoUpdateTodayStat();
+  renderPomoBet();
+  renderPomoEstimate();
 
   // cứ 4 phiên tập trung hoàn thành trong ngày thì tự động chuyển sang nghỉ dài
   const todaysCount = pomoSessionsToday().length;
@@ -6027,8 +7161,49 @@ function renderPomoTrendChart(){
     ? `<div class="hs-bars">${barsHtml}</div>`
     : `<div class="pomo-journal-empty">Chưa có dữ liệu để vẽ xu hướng.</div>`;
 }
+function renderPjInsight(entries){
+  const box = document.getElementById('pjInsight');
+  if(!box) return;
+  const parts = [];
+
+  // so sánh số phiên tuần này với tuần trước
+  const thisWeek = pomoSessionsThisCalendarWeek(0).length;
+  const lastWeek = pomoSessionsThisCalendarWeek(-1).length;
+  if(thisWeek>0 || lastWeek>0){
+    if(lastWeek===0){
+      parts.push(`📈 Tuần này bạn đã có <b>${thisWeek}</b> phiên (tuần trước chưa có phiên nào).`);
+    } else {
+      const diff = thisWeek - lastWeek;
+      const diffPct = Math.round((diff/lastWeek)*100);
+      if(diff>0) parts.push(`📈 Tuần này bạn tập trung nhiều hơn tuần trước <b>${diffPct}%</b> (${thisWeek} so với ${lastWeek} phiên).`);
+      else if(diff<0) parts.push(`📉 Tuần này bạn tập trung ít hơn tuần trước <b>${Math.abs(diffPct)}%</b> (${thisWeek} so với ${lastWeek} phiên).`);
+      else parts.push(`➖ Tuần này bạn có <b>${thisWeek}</b> phiên, bằng tuần trước.`);
+    }
+  }
+
+  // chỉ xét 14 phiên gần nhất có tag, để insight phản ánh xu hướng gần đây
+  const recent = entries.slice(0, 14).filter(e=>e.tags && e.tags.length);
+  if(recent.length >= 3){
+    const counts = new Map();
+    recent.forEach(e=> e.tags.forEach(t=> counts.set(t, (counts.get(t)||0)+1)));
+    const sorted = [...counts.entries()].sort((a,b)=>b[1]-a[1]);
+    if(sorted.length){
+      const top = sorted.slice(0,3).map(([t,c])=>`${t} (<b>${c}</b> lần)`).join(', ');
+      const ratedRecent = recent.filter(e=>e.rating);
+      const avg = ratedRecent.length ? (ratedRecent.reduce((a,e)=>a+e.rating,0)/ratedRecent.length).toFixed(1) : null;
+      parts.push(`🔎 Trong ${recent.length} phiên gần đây, bạn hay mất tập trung vì: ${top}.`
+        + (avg ? ` Hiệu quả trung bình: <b>${avg}⭐</b>. Thử khắc phục nguyên nhân đứng đầu trước tiên nhé!` : ''));
+    }
+  }
+
+  if(!parts.length){ box.style.display = 'none'; return; }
+  box.style.display = '';
+  box.innerHTML = parts.join('<br>');
+}
+
 function renderPomoJournal(){
   renderPomoTrendChart();
+  renderPjReflect();
   const list = document.getElementById('pomoJournalList');
   const empty = document.getElementById('pomoJournalEmpty');
   const filterSel = document.getElementById('pjFilterMonth');
@@ -6045,11 +7220,13 @@ function renderPomoJournal(){
     empty.style.display = '';
     list.innerHTML = '';
     summaryEl.innerHTML = '';
+    document.getElementById('pjInsight').style.display = 'none';
     return;
   }
   empty.style.display = 'none';
 
   const filtered = filterSel.value ? pomodoroSessions.filter(e=>e.month===filterSel.value) : pomodoroSessions;
+  renderPjInsight(filtered);
 
   if(!filtered.length){
     list.innerHTML = '';
@@ -6080,12 +7257,13 @@ function renderPomoJournal(){
     <tbody>
     ${filtered.map(e=>{
       const stars = '⭐'.repeat(e.rating||0) + '☆'.repeat(5-(e.rating||0));
+      const tagsHtml = (e.tags && e.tags.length) ? `<div class="pj-td-tags">${e.tags.map(t=>`<span class="pj-td-tag">${escapeHtmlP(t)}</span>`).join('')}</div>` : '';
       return `<tr data-id="${e.id}">
         <td class="pj-td-date">${pomoFmtDateVN(e.date)}</td>
         <td>${e.durationMin} phút${e.taskTitle ? `<div class="pj-td-task">🎯 ${escapeHtmlP(e.taskTitle)}</div>` : ''}</td>
         <td class="pj-td-stars">${stars}</td>
         ${pjTextCell(e.accomplished)}
-        ${pjTextCell(e.issues)}
+        <td class="pj-td-text">${tagsHtml}${e.issues ? (e.tags && e.tags.length ? `<div style="margin-top:4px;">${escapeHtmlP(e.issues)}</div>` : escapeHtmlP(e.issues)) : (tagsHtml ? '' : '—')}</td>
         ${pjTextCell(e.fix)}
         <td class="pj-td-done">${e.taskMarkedDone ? '<span class="pj-entry-taskdone">✓ Đã xong</span>' : '—'}</td>
         <td class="pj-td-actions"><button class="pj-entry-edit" title="Sửa">✎</button><button class="pj-entry-del" title="Xoá">✕</button></td>
